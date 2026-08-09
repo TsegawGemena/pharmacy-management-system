@@ -18,6 +18,7 @@ import {
   FileText,
   AlertCircle,
   ArrowLeft,
+  MapPin,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import ReceiveItemsModal from "@/components/inventory/receive-items-modal";
@@ -122,6 +123,22 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* Printable Official Gamo Pharmacy Header (Visible when printing) */}
+      <div className="hidden print:flex items-center justify-between border-b-2 border-slate-800 pb-4 mb-6">
+        <div className="flex items-center gap-4">
+          <img src="/logo.jpg" alt="Logo" className="h-16 w-16 object-contain" />
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">GAMO DEVELOPMENT ASSOCIATION</h1>
+            <h2 className="text-sm font-semibold text-sky-800">Gammo Pharmacy - Clinical Operations</h2>
+            <p className="text-xs text-slate-500">Addis Ababa & Arba Minch, Ethiopia | EFDA License: EFDA/PH-2024/0981</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-base font-bold font-mono text-slate-900">{poId}</div>
+          <div className="text-xs text-slate-500">Official Purchase Order</div>
+        </div>
+      </div>
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-medium text-slate-500 print:hidden">

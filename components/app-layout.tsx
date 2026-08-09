@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  // If on login route, render standalone full-screen page
+  if (pathname === "/login") {
+    return <div className="min-h-screen bg-white">{children}</div>;
+  }
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">

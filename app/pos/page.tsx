@@ -526,9 +526,18 @@ export default function PosPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <div>
-                <h3 className="text-base font-bold text-slate-800">Checkout & Payment</h3>
-                <p className="text-xs text-slate-500">Order: {invNumber} • {selectedCustomer}</p>
+              <div className="flex items-center gap-3">
+                <img
+                  src="/logo.jpg"
+                  alt="Logo"
+                  className="h-9 w-9 object-contain rounded-lg border border-slate-200 bg-white p-0.5"
+                />
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Checkout & Payment</h3>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    Order: {invNumber} • {selectedCustomer}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setIsPaymentModalOpen(false)}

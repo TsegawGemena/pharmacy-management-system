@@ -1,0 +1,244 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldCheck,
+  Contact,
+} from "lucide-react";
+
+export default function LoginPage() {
+  const router = useRouter();
+
+  const [employeeId, setEmployeeId] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employeeId.trim()) {
+      setErrorMessage("Please enter your Employee ID");
+      return;
+    }
+    if (!password.trim()) {
+      setErrorMessage("Please enter your password");
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    // Simulate authentication and redirect to dashboard
+    setTimeout(() => {
+      setIsLoading(false);
+      router.push("/");
+    }, 500);
+  };
+
+  return (
+    <div className="flex min-h-screen w-full bg-slate-950 font-sans">
+      {/* Left Column: Prominent Visual Brand Hero (50% on desktop) */}
+      <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between p-10 xl:p-14 overflow-hidden">
+        {/* Pharmacy Interior Background Image - Prominent & Clearly Visible */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100 transition-transform duration-700"
+          style={{
+            backgroundImage: "url('/pharmacy-interior.jpg')",
+            backgroundPosition: "center 35%",
+          }}
+          role="img"
+          aria-label="Modern clinical pharmacy interior with medicine shelves and reception"
+        />
+
+        {/* Tailored Medical Teal / Deep Blue Gradient Tint for Text Legibility & Visual Clarity */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#00344d]/90 via-[#004766]/75 to-[#002233]/85 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-slate-950/25" />
+
+        {/* Top Brand Header */}
+        <div className="relative z-10 flex items-center gap-3.5">
+          <div className="h-11 w-11 rounded-xl bg-white p-1 shadow-lg border border-white/30 flex items-center justify-center shrink-0">
+            <img
+              src="/logo.jpg"
+              alt="Gammo Pharmacy Logo"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <span className="text-xl font-bold text-white tracking-tight drop-shadow-xs">
+            Gammo Pharmacy
+          </span>
+        </div>
+
+        {/* Middle Value Proposition Headline */}
+        <div className="relative z-10 max-w-lg space-y-4 my-auto py-12">
+          <h1 className="text-4xl xl:text-[46px] font-extrabold text-white tracking-tight leading-[1.15] drop-shadow-sm">
+            Pharmacy Management <br />
+            System
+          </h1>
+          <p className="text-base xl:text-lg text-sky-100/95 font-normal leading-relaxed max-w-md drop-shadow-xs">
+            Securely manage your pharmacy operations, inventory, and daily sales.
+          </p>
+        </div>
+
+        {/* Bottom Security Trust Badge */}
+        <div className="relative z-10 flex items-center gap-2.5 text-xs font-bold uppercase tracking-widest text-sky-200/95 drop-shadow-xs">
+          <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>SECURE • RELIABLE • BUILT FOR PHARMACY OPERATIONS</span>
+        </div>
+      </div>
+
+      {/* Right Column: Clean Authentication Form (50% on desktop, 100% on mobile) */}
+      <div className="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12 lg:p-16 xl:p-20 bg-white">
+        <div className="w-full max-w-[420px] space-y-8">
+          {/* Mobile Header Branding */}
+          <div className="flex lg:hidden items-center gap-3 pb-3 border-b border-slate-100">
+            <div className="h-10 w-10 rounded-xl bg-white p-1 shadow-xs border border-slate-200 flex items-center justify-center">
+              <img
+                src="/logo.jpg"
+                alt="Gammo Pharmacy Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
+            <div>
+              <span className="text-base font-bold text-slate-800">
+                Gammo Pharmacy
+              </span>
+              <p className="text-[11px] text-slate-400 font-medium">Clinical Management</p>
+            </div>
+          </div>
+
+          {/* Form Header */}
+          <div className="space-y-2">
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              Welcome back
+            </h2>
+            <p className="text-sm text-slate-500 font-medium">
+              Sign in to your pharmacy workspace
+            </p>
+          </div>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium animate-in fade-in duration-200">
+              {errorMessage}
+            </div>
+          )}
+
+          {/* Sign In Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Employee ID */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="employeeId"
+                className="block text-xs font-bold uppercase tracking-wider text-slate-700"
+              >
+                Employee ID
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Contact className="h-4 w-4" />
+                </div>
+                <input
+                  id="employeeId"
+                  type="text"
+                  required
+                  placeholder="Enter your employee ID"
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:bg-white focus:border-sky-500 focus:outline-hidden focus:ring-1 focus:ring-sky-500 transition-all font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="password"
+                className="block text-xs font-bold uppercase tracking-wider text-slate-700"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-11 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:bg-white focus:border-sky-500 focus:outline-hidden focus:ring-1 focus:ring-sky-500 transition-all font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between text-xs font-medium pt-0.5">
+              <label className="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-[#006699] focus:ring-sky-500 accent-[#006699]"
+                />
+                <span>Remember me</span>
+              </label>
+
+              <button
+                type="button"
+                onClick={() => alert("Password reset instructions have been sent to your supervisor.")}
+                className="text-[#006699] hover:text-[#004e71] font-semibold hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3.5 px-4 bg-[#005f59] hover:bg-[#004c47] text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-70 cursor-pointer active:scale-[0.99]"
+            >
+              {isLoading ? (
+                <span>Signing in...</span>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Footer Security Notice */}
+          <div className="pt-2 text-center">
+            <div className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+              <Lock className="h-3.5 w-3.5 text-slate-400" />
+              <span>Your account and pharmacy data are protected.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

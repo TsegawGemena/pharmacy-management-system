@@ -15,7 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Gammo Pharmacy - Clinical Management System",
-  description: "Gammo Development Pharmacy Management System",
+  description: "Gamo Development Association - Gammo Clinical Pharmacy Management System",
+  icons: {
+    icon: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({
