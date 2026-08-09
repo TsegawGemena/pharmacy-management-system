@@ -1,0 +1,444 @@
+"use client";
+
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
+import {
+  Package,
+  RefreshCw,
+  TrendingDown,
+  DollarSign,
+  AlertTriangle,
+  ClipboardList,
+  Plus,
+  Download,
+  Filter as FilterIcon,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  MoreVertical,
+  FileEdit,
+  RotateCcw,
+} from "lucide-react";
+import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
+import CreateAdjustmentModal from "@/components/inventory/create-adjustment-modal";
+
+interface AdjustmentRecord {
+  id: string; // e.g. "#ADJ-092"
+  date: string;
+  productName: string;
+  sku: string;
+  type: "Expired" | "Inventory Count" | "Damaged" | "Theft / Lost" | "Return to Supplier";
+  qtyChange: number;
+  adjustedBy: string;
+  status: "Completed" | "Pending Review";
+  reason?: string;
+}
+
+const INITIAL_ADJUSTMENTS: AdjustmentRecord[] = [
+  {
+    id: "#ADJ-092",
+    date: "Oct 24, 2023",
+    productName: "Amoxicillin 500mg Capsules",
+    sku: "AMX-500-CP",
+    type: "Expired",
+    qtyChange: -15,
+    adjustedBy: "Dr. Tadesse",
+    status: "Completed",
+    reason: "Batch past shelf life expiration date.",
+  },
+  {
+    id: "#ADJ-091",
+    date: "Oct 24, 2023",
+    productName: "Paracetamol 500mg Tablets",
+    sku: "PAR-500-TB",
+    type: "Inventory Count",
+    qtyChange: 24,
+    adjustedBy: "System (Auto)",
+    status: "Pending Review",
+    reason: "Physical cycle audit count exceeded ERP recorded quantity.",
+  },
+  {
+    id: "#ADJ-090",
+    date: "Oct 22, 2023",
+    productName: "Omeprazole 20mg",
+    sku: "OMP-020-CP",
+    type: "Damaged",
+    qtyChange: -2,
+    adjustedBy: "Alemayehu K.",
+    status: "Completed",
+    reason: "Moisture seal compromise detected during routine check.",
+  },
+  {
+    id: "#ADJ-089",
+    date: "Oct 20, 2023",
+    productName: "Azithromycin 500mg",
+    sku: "AZI-500-TB",
+    type: "Theft / Lost",
+    qtyChange: -4,
+    adjustedBy: "Dr. Tadesse",
+    status: "Completed",
+    reason: "Discrepancy identified during weekly dispensary reconciliation.",
+  },
+  {
+    id: "#ADJ-088",
+    date: "Oct 18, 2023",
+    productName: "Metformin 500mg",
+    sku: "MET-500-TB",
+    type: "Return to Supplier",
+    qtyChange: -50,
+    adjustedBy: "Abebe K.",
+    status: "Completed",
+    reason: "Supplier recall batch batch #MF-5510 returned for credit note.",
+  },
+];
+
+export default function StockAdjustmentsPage() {
+  const [adjustments, setAdjustments] = useState<AdjustmentRecord[]>(INITIAL_ADJUSTMENTS);
+  const [typeFilter, setTypeFilter] = useState("All Types");
+  const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleAddAdjustment = (newAdj: AdjustmentRecord) => {
+    setAdjustments((prev) => [newAdj, ...prev]);
+    showToast(`Created stock adjustment ${newAdj.id}`);
+  };
+
+  const handleExportReport = () => {
+    const headers = "Adjustment ID,Date,Product Name,SKU,Type,Qty Change,Adjusted By,Status\n";
+    const rows = adjustments
+      .map(
+        (a) =>
+          `"${a.id}","${a.date}","${a.productName}","${a.sku}","${a.type}",${a.qtyChange},"${a.adjustedBy}","${a.status}"`
+      )
+      .join("\n");
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Stock_Adjustments_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Exported adjustment report CSV");
+  };
+
+  const filteredAdjustments = useMemo(() => {
+    return adjustments.filter((a) => {
+      if (typeFilter !== "All Types" && a.type !== typeFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [adjustments, typeFilter]);
+
+  return (
+    <div className="space-y-6">
+      {/* Sub Navigation Tabs */}
+      <InventoryNavTabs />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-xl shadow-lg border border-slate-700 animate-in slide-in-from-top duration-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+            Stock Adjustments
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Manage discrepancies, damages, and expired inventory records.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportReport}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors shadow-2xs"
+          >
+            <Download className="h-4 w-4 text-slate-600" />
+            <span>Export Report</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Adjustment</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 4 Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Adjustments */}
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-[11px] font-bold">
+              Total Adjustments (Month)
+            </span>
+            <FileEdit className="h-4 w-4 text-slate-400" />
+          </div>
+          <div className="flex items-center gap-3 mt-3">
+            <span className="text-3xl font-extrabold text-slate-800 font-mono">142</span>
+            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+              <TrendingDown className="h-3 w-3" />
+              12%
+            </span>
+          </div>
+        </div>
+
+        {/* Value of Discrepancies */}
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 text-[11px] font-bold">
+                Value of Discrepancies
+              </span>
+              <DollarSign className="h-4 w-4 text-slate-400" />
+            </div>
+            <div className="flex items-baseline gap-2 mt-3">
+              <span className="text-3xl font-extrabold text-slate-800 font-mono">4,520</span>
+              <span className="text-xs font-semibold text-slate-500">ETB</span>
+            </div>
+          </div>
+          {/* Dual tone bottom bar */}
+          <div className="h-1.5 w-full bg-sky-100 rounded-full mt-3 overflow-hidden flex">
+            <div className="w-1/3 bg-rose-500 rounded-l-full" />
+            <div className="w-2/3 bg-sky-400 rounded-r-full" />
+          </div>
+        </div>
+
+        {/* Damaged / Expired */}
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-[11px] font-bold">
+              Damaged / Expired
+            </span>
+            <AlertTriangle className="h-4 w-4 text-slate-400" />
+          </div>
+          <div className="flex items-baseline gap-2 mt-3">
+            <span className="text-3xl font-extrabold text-rose-600 font-mono">38</span>
+            <span className="text-xs font-medium text-slate-500">Items</span>
+          </div>
+        </div>
+
+        {/* Pending Review */}
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-[11px] font-bold">
+              Pending Review
+            </span>
+            <ClipboardList className="h-4 w-4 text-slate-400" />
+          </div>
+          <div className="flex items-baseline gap-2 mt-3">
+            <span className="text-3xl font-extrabold text-amber-600 font-mono">12</span>
+            <span className="text-xs font-medium text-slate-500">Records</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Table Card */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        {/* Filter Bar */}
+        <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Type Dropdown */}
+            <div className="relative">
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="pl-8 pr-4 py-2 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500"
+              >
+                <option value="All Types">All Types</option>
+                <option value="Expired">Expired</option>
+                <option value="Inventory Count">Inventory Count</option>
+                <option value="Damaged">Damaged</option>
+                <option value="Theft / Lost">Theft / Lost</option>
+                <option value="Return to Supplier">Return to Supplier</option>
+              </select>
+              <FilterIcon className="absolute left-2.5 top-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Date Range Dropdown */}
+            <div className="relative">
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="pl-8 pr-4 py-2 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500"
+              >
+                <option value="Last 7 Days">Last 7 Days</option>
+                <option value="Last 30 Days">Last 30 Days</option>
+                <option value="This Month">This Month</option>
+                <option value="Custom Range">Custom Range</option>
+              </select>
+              <Calendar className="absolute left-2.5 top-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Pagination summary on right */}
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span>1-10 of 142</span>
+            <div className="flex items-center gap-1">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs sm:text-[13px]">
+            <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="py-3.5 px-6">ID</th>
+                <th className="py-3.5 px-5">DATE</th>
+                <th className="py-3.5 px-6">PRODUCT NAME</th>
+                <th className="py-3.5 px-4 font-mono">SKU</th>
+                <th className="py-3.5 px-5 text-center">TYPE</th>
+                <th className="py-3.5 px-5 text-center font-mono">QTY CHANGE</th>
+                <th className="py-3.5 px-5">ADJUSTED BY</th>
+                <th className="py-3.5 px-5 text-center">STATUS</th>
+                <th className="py-3.5 px-4 text-right">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredAdjustments.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-slate-400 text-xs">
+                    No adjustment records found.
+                  </td>
+                </tr>
+              ) : (
+                filteredAdjustments.map((adj) => (
+                  <tr key={adj.id} className="hover:bg-slate-50/60 transition-colors">
+                    {/* ID */}
+                    <td className="py-3.5 px-6 font-mono font-bold text-[#0284c7]">
+                      {adj.id}
+                    </td>
+
+                    {/* Date */}
+                    <td className="py-3.5 px-5 text-slate-600 font-medium">
+                      {adj.date}
+                    </td>
+
+                    {/* Product Name */}
+                    <td className="py-3.5 px-6 font-semibold text-slate-800">
+                      {adj.productName}
+                    </td>
+
+                    {/* SKU */}
+                    <td className="py-3.5 px-4 font-mono text-slate-500 font-medium text-[11px]">
+                      {adj.sku}
+                    </td>
+
+                    {/* Type Badge */}
+                    <td className="py-3.5 px-5 text-center">
+                      {adj.type === "Expired" && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                          Expired
+                        </span>
+                      )}
+                      {adj.type === "Inventory Count" && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-sky-100 text-sky-800 border border-sky-200">
+                          Inventory Count
+                        </span>
+                      )}
+                      {adj.type === "Damaged" && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-orange-50 text-orange-700 border border-orange-200">
+                          Damaged
+                        </span>
+                      )}
+                      {adj.type === "Theft / Lost" && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                          Theft / Lost
+                        </span>
+                      )}
+                      {adj.type === "Return to Supplier" && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          Return to Supplier
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Qty Change */}
+                    <td className="py-3.5 px-5 text-center font-mono font-bold">
+                      <span
+                        className={
+                          adj.qtyChange < 0 ? "text-rose-600" : "text-emerald-600"
+                        }
+                      >
+                        {adj.qtyChange > 0 ? `+${adj.qtyChange}` : adj.qtyChange}
+                      </span>
+                    </td>
+
+                    {/* Adjusted By */}
+                    <td className="py-3.5 px-5 text-slate-700 font-medium">
+                      {adj.adjustedBy}
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-3.5 px-5 text-center">
+                      {adj.status === "Completed" ? (
+                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold border border-emerald-500 text-emerald-700 bg-white">
+                          Completed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                          Pending Review
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() =>
+                          showToast(`Viewing details for adjustment ${adj.id}`)
+                        }
+                        className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Create Adjustment Modal */}
+      <CreateAdjustmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddAdjustment={handleAddAdjustment}
+      />
+    </div>
+  );
+}
