@@ -10,8 +10,8 @@ export default function CategoryDonutChart() {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs space-y-4 flex flex-col justify-between">
-      <h3 className="text-base font-bold text-slate-800 tracking-tight">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs space-y-4 flex flex-col justify-between transition-colors">
+      <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
         Stock Value by Category
       </h3>
 
@@ -24,8 +24,8 @@ export default function CategoryDonutChart() {
             cy="50"
             r="38"
             fill="transparent"
-            stroke="#f1f5f9"
             strokeWidth="12"
+            className="stroke-slate-100 dark:stroke-slate-800"
           />
 
           {/* Antibiotics (45%) -> circumference = 2 * PI * 38 = 238.76. 45% = 107.44 */}
@@ -34,7 +34,7 @@ export default function CategoryDonutChart() {
             cy="50"
             r="38"
             fill="transparent"
-            stroke="#0c4a6e"
+            stroke="#0284c7"
             strokeWidth="12"
             strokeDasharray="107.44 131.32"
             strokeDashoffset="0"
@@ -70,17 +70,17 @@ export default function CategoryDonutChart() {
 
         {/* Center Text */}
         <div className="absolute flex flex-col items-center justify-center text-center">
-          <span className="text-2xl font-extrabold text-slate-800 font-mono tracking-tight">
+          <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 font-mono tracking-tight">
             1.2M
           </span>
-          <span className="text-[10.5px] font-medium text-slate-400">
+          <span className="text-[10.5px] font-medium text-slate-400 dark:text-slate-500">
             Total Value (ETB)
           </span>
         </div>
       </div>
 
       {/* Category Legend with exact amounts */}
-      <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
+      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
         {categories.map((cat) => (
           <div key={cat.name} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -88,11 +88,11 @@ export default function CategoryDonutChart() {
                 className="h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: cat.color }}
               />
-              <span className="text-slate-700 font-medium">
+              <span className="text-slate-700 dark:text-slate-300 font-medium">
                 {cat.name} ({cat.percentage}%)
               </span>
             </div>
-            <span className="font-mono font-bold text-slate-800">
+            <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
               {cat.value}
             </span>
           </div>

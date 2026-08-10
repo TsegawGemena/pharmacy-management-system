@@ -13,19 +13,19 @@ export default function RevenueProfitChart() {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs space-y-4">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs space-y-4 transition-colors">
       {/* Header & Legend */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-bold text-slate-800 tracking-tight">
+        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
           Revenue vs. Profit
         </h3>
         <div className="flex items-center gap-4 text-xs font-semibold">
-          <div className="flex items-center gap-1.5 text-[#006699]">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#006699]" />
+          <div className="flex items-center gap-1.5 text-[#006699] dark:text-sky-400">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#006699] dark:bg-sky-400" />
             <span>Revenue</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[#008080]">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#008080]" />
+          <div className="flex items-center gap-1.5 text-[#008080] dark:text-teal-400">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#008080] dark:bg-teal-400" />
             <span>Profit</span>
           </div>
         </div>
@@ -47,10 +47,10 @@ export default function RevenueProfitChart() {
           </defs>
 
           {/* Horizontal Grid lines */}
-          <line x1="0" y1="60" x2="500" y2="60" stroke="#f1f5f9" strokeWidth="1" />
-          <line x1="0" y1="130" x2="500" y2="130" stroke="#f1f5f9" strokeWidth="1" />
-          <line x1="0" y1="200" x2="500" y2="200" stroke="#f1f5f9" strokeWidth="1" />
-          <line x1="0" y1="270" x2="500" y2="270" stroke="#e2e8f0" strokeWidth="1.5" />
+          <line x1="0" y1="60" x2="500" y2="60" className="stroke-slate-100 dark:stroke-slate-800/80" strokeWidth="1" />
+          <line x1="0" y1="130" x2="500" y2="130" className="stroke-slate-100 dark:stroke-slate-800/80" strokeWidth="1" />
+          <line x1="0" y1="200" x2="500" y2="200" className="stroke-slate-100 dark:stroke-slate-800/80" strokeWidth="1" />
+          <line x1="0" y1="270" x2="500" y2="270" className="stroke-slate-200 dark:stroke-slate-700" strokeWidth="1.5" />
 
           {/* Revenue Area Fill */}
           <path
@@ -65,6 +65,7 @@ export default function RevenueProfitChart() {
             stroke="#006699"
             strokeWidth="4"
             strokeLinecap="round"
+            className="dark:stroke-sky-400"
           />
 
           {/* Profit Dashed Wave Line */}
@@ -75,6 +76,7 @@ export default function RevenueProfitChart() {
             strokeWidth="3.5"
             strokeDasharray="6 6"
             strokeLinecap="round"
+            className="dark:stroke-teal-400"
           />
 
           {/* Data Points */}
@@ -91,8 +93,8 @@ export default function RevenueProfitChart() {
                 cy={pt.y}
                 r={hoveredWeek === pt.idx ? "6" : "4.5"}
                 fill="#006699"
-                stroke="#ffffff"
                 strokeWidth="2"
+                className="stroke-white dark:stroke-slate-900 dark:fill-sky-400"
                 onMouseEnter={() => setHoveredWeek(pt.idx)}
                 onMouseLeave={() => setHoveredWeek(null)}
               />
@@ -102,8 +104,8 @@ export default function RevenueProfitChart() {
                 cy={pt.pY}
                 r={hoveredWeek === pt.idx ? "5.5" : "4"}
                 fill="#008080"
-                stroke="#ffffff"
                 strokeWidth="2"
+                className="stroke-white dark:stroke-slate-900 dark:fill-teal-400"
                 onMouseEnter={() => setHoveredWeek(pt.idx)}
                 onMouseLeave={() => setHoveredWeek(null)}
               />
@@ -114,7 +116,7 @@ export default function RevenueProfitChart() {
         {/* Floating Tooltip when hovered */}
         {hoveredWeek !== null && (
           <div
-            className="absolute -top-3 z-10 bg-slate-900/95 text-white p-2.5 rounded-lg shadow-xl text-xs space-y-1 backdrop-blur-xs border border-slate-700 pointer-events-none transition-all duration-150"
+            className="absolute -top-3 z-10 bg-slate-900/95 dark:bg-slate-800/95 text-white p-2.5 rounded-lg shadow-xl text-xs space-y-1 backdrop-blur-xs border border-slate-700 pointer-events-none transition-all duration-150"
             style={{
               left: `${(hoveredWeek + 0.5) * 23}%`,
             }}
@@ -135,7 +137,7 @@ export default function RevenueProfitChart() {
       </div>
 
       {/* X-Axis Labels */}
-      <div className="flex items-center justify-between px-3 text-xs font-mono font-medium text-slate-500 pt-1">
+      <div className="flex items-center justify-between px-3 text-xs font-mono font-medium text-slate-500 dark:text-slate-400 pt-1">
         <span>Week 1</span>
         <span>Week 2</span>
         <span>Week 3</span>

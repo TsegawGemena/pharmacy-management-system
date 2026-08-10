@@ -94,11 +94,11 @@ export default function LoginPage() {
       </div>
 
       {/* Right Column: Clean Authentication Form (50% on desktop, 100% on mobile) */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12 lg:p-16 xl:p-20 bg-white">
+      <div className="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12 lg:p-16 xl:p-20 bg-white dark:bg-slate-900 transition-colors">
         <div className="w-full max-w-[420px] space-y-8">
           {/* Mobile Header Branding */}
-          <div className="flex lg:hidden items-center gap-3 pb-3 border-b border-slate-100">
-            <div className="h-10 w-10 rounded-xl bg-white p-1 shadow-xs border border-slate-200 flex items-center justify-center">
+          <div className="flex lg:hidden items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-800 p-1 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center">
               <img
                 src="/logo.jpg"
                 alt="Gammo Pharmacy Logo"
@@ -106,26 +106,26 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <span className="text-base font-bold text-slate-800">
+              <span className="text-base font-bold text-slate-800 dark:text-slate-100">
                 Gammo Pharmacy
               </span>
-              <p className="text-[11px] text-slate-400 font-medium">Clinical Management</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Clinical Management</p>
             </div>
           </div>
 
           {/* Form Header */}
           <div className="space-y-2">
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Welcome back
             </h2>
-            <p className="text-sm text-slate-500 font-medium">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
               Sign in to your pharmacy workspace
             </p>
           </div>
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium animate-in fade-in duration-200">
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs rounded-xl font-medium animate-in fade-in duration-200">
               {errorMessage}
             </div>
           )}
@@ -136,7 +136,7 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="employeeId"
-                className="block text-xs font-bold uppercase tracking-wider text-slate-700"
+                className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300"
               >
                 Employee ID
               </label>
@@ -151,7 +151,7 @@ export default function LoginPage() {
                   placeholder="Enter your employee ID"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:bg-white focus:border-sky-500 focus:outline-hidden focus:ring-1 focus:ring-sky-500 transition-all font-medium"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80 py-3 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs focus:bg-white dark:focus:bg-slate-800 focus:border-sky-500 focus:outline-hidden focus:ring-1 focus:ring-sky-500 transition-all font-medium"
                 />
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="block text-xs font-bold uppercase tracking-wider text-slate-700"
+                className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300"
               >
                 Password
               </label>
@@ -175,12 +175,12 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-11 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:bg-white focus:border-sky-500 focus:outline-hidden focus:ring-1 focus:ring-sky-500 transition-all font-medium"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80 py-3 pl-10 pr-11 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs focus:bg-white dark:focus:bg-slate-800 focus:border-sky-500 focus:outline-hidden focus:ring-1 focus:ring-sky-500 transition-all font-medium"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -194,12 +194,12 @@ export default function LoginPage() {
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between text-xs font-medium pt-0.5">
-              <label className="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+              <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-[#006699] focus:ring-sky-500 accent-[#006699]"
+                  className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-[#006699] focus:ring-sky-500 accent-[#006699]"
                 />
                 <span>Remember me</span>
               </label>
@@ -207,7 +207,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => alert("Password reset instructions have been sent to your supervisor.")}
-                className="text-[#006699] hover:text-[#004e71] font-semibold hover:underline"
+                className="text-[#006699] dark:text-sky-400 hover:text-[#004e71] dark:hover:text-sky-300 font-semibold hover:underline cursor-pointer"
               >
                 Forgot password?
               </button>
@@ -232,7 +232,7 @@ export default function LoginPage() {
 
           {/* Footer Security Notice */}
           <div className="pt-2 text-center">
-            <div className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
               <Lock className="h-3.5 w-3.5 text-slate-400" />
               <span>Your account and pharmacy data are protected.</span>
             </div>

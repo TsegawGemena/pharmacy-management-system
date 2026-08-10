@@ -217,10 +217,10 @@ export default function LowStockAlertsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             Low Stock Alerts
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Manage inventory thresholds and initiate purchase orders.
           </p>
         </div>
@@ -228,15 +228,15 @@ export default function LowStockAlertsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-lg transition-colors shadow-2xs cursor-pointer"
           >
-            <SlidersHorizontal className="h-4 w-4 text-slate-600" />
+            <SlidersHorizontal className="h-4 w-4 text-slate-600 dark:text-slate-300" />
             <span>Alert Settings</span>
           </button>
 
           <button
             onClick={handleCreateBulkPO}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer"
           >
             <ShoppingCart className="h-4 w-4" />
             <span>
@@ -251,59 +251,59 @@ export default function LowStockAlertsPage() {
       {/* 3 Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Critical Stock Card (Peach / Red Alert Background) */}
-        <div className="bg-rose-50/70 border border-rose-200 rounded-xl p-5 shadow-2xs">
+        <div className="bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 rounded-xl p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-rose-300">
               CRITICAL STOCK
             </span>
-            <div className="p-2 bg-rose-100/90 text-rose-600 rounded-full">
+            <div className="p-2 bg-rose-100/90 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-full">
               <TrendingDown className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-rose-600 mt-2 font-mono">
+          <div className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-2 font-mono">
             12
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-rose-700 font-semibold mt-1">
-            <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
+          <div className="flex items-center gap-1.5 text-xs text-rose-700 dark:text-rose-300 font-semibold mt-1">
+            <AlertTriangle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
             <span>Below 5 units</span>
           </div>
         </div>
 
         {/* Low Stock Threshold Card */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               LOW STOCK (THRESHOLD)
             </span>
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-full">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-full">
               <Package className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-slate-800 mt-2 font-mono">
+          <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2 font-mono">
             34
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-1">
-            <Info className="h-3.5 w-3.5 text-slate-400" />
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+            <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
             <span>Action required soon</span>
           </div>
         </div>
 
         {/* Pending Restock Card */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               PENDING RESTOCK
             </span>
-            <div className="p-2 bg-sky-50 text-sky-600 rounded-full">
+            <div className="p-2 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 rounded-full">
               <Truck className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-slate-800 mt-2 font-mono">
+          <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2 font-mono">
             8
           </div>
           <Link
             href="/inventory/purchase-orders"
-            className="inline-flex items-center gap-1 text-xs text-[#0284c7] font-semibold hover:underline mt-1"
+            className="inline-flex items-center gap-1 text-xs text-[#0284c7] dark:text-sky-400 font-semibold hover:underline mt-1"
           >
             <span>View active POs</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -312,9 +312,9 @@ export default function LowStockAlertsPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
         {/* Filter Pills & Sort Toolbar */}
-        <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center gap-2">
             {[
@@ -326,10 +326,10 @@ export default function LowStockAlertsPage() {
               <button
                 key={tab.id}
                 onClick={() => setFilterTab(tab.id as any)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   filterTab === tab.id
                     ? "bg-[#006699] text-white shadow-2xs"
-                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
                 }`}
               >
                 {tab.label}
@@ -338,12 +338,12 @@ export default function LowStockAlertsPage() {
           </div>
 
           {/* Sort By Dropdown */}
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <span className="text-slate-400">Sort by:</span>
+          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+            <span className="text-slate-400 dark:text-slate-500">Sort by:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:outline-hidden focus:border-sky-500"
+              className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-sky-500"
             >
               <option value="urgency">Urgency (High to Low)</option>
               <option value="stock_asc">Stock Level (Lowest First)</option>
@@ -355,7 +355,7 @@ export default function LowStockAlertsPage() {
         {/* Alerts Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-[13px]">
-            <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+            <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-3 px-4 w-10 text-center">
                   <input
@@ -365,7 +365,7 @@ export default function LowStockAlertsPage() {
                       selectedIds.length === filteredAlerts.length
                     }
                     onChange={handleToggleSelectAll}
-                    className="h-4 w-4 rounded text-[#006699] border-slate-300 focus:ring-[#006699]"
+                    className="h-4 w-4 rounded text-[#006699] border-slate-300 dark:border-slate-600 focus:ring-[#006699]"
                   />
                 </th>
                 <th className="py-3.5 px-5">PRODUCT DETAILS</th>
@@ -376,10 +376,10 @@ export default function LowStockAlertsPage() {
                 <th className="py-3.5 px-5 text-right">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredAlerts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No alert items found in this category.
                   </td>
                 </tr>
@@ -393,9 +393,9 @@ export default function LowStockAlertsPage() {
                       key={item.id}
                       className={`transition-colors ${
                         isCritical
-                          ? "bg-rose-50/35 hover:bg-rose-50/60"
-                          : "hover:bg-slate-50/60"
-                      } ${isSelected ? "ring-1 ring-inset ring-sky-300" : ""}`}
+                          ? "bg-rose-50/35 dark:bg-rose-950/20 hover:bg-rose-50/60 dark:hover:bg-rose-950/30"
+                          : "hover:bg-slate-50/60 dark:hover:bg-slate-800/50"
+                      } ${isSelected ? "ring-1 ring-inset ring-sky-300 dark:ring-sky-600" : ""}`}
                     >
                       {/* Checkbox */}
                       <td className="py-3.5 px-4 text-center">
@@ -403,24 +403,24 @@ export default function LowStockAlertsPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelect(item.id)}
-                          className="h-4 w-4 rounded text-[#006699] border-slate-300 focus:ring-[#006699]"
+                          className="h-4 w-4 rounded text-[#006699] border-slate-300 dark:border-slate-600 focus:ring-[#006699]"
                         />
                       </td>
 
                       {/* Product Details with icon */}
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                          <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
                             {item.iconType === "capsule" && <Pill className="h-4 w-4" />}
                             {item.iconType === "tablet" && <HeartPulse className="h-4 w-4" />}
                             {item.iconType === "gauze" && <Bandage className="h-4 w-4" />}
                             {item.iconType === "pill" && <Pill className="h-4 w-4" />}
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-800 text-[13px]">
+                            <div className="font-semibold text-slate-800 dark:text-slate-200 text-[13px]">
                               {item.name}
                             </div>
-                            <div className="text-[11px] text-slate-400">
+                            <div className="text-[11px] text-slate-400 dark:text-slate-500">
                               Supplier: {item.supplier}
                             </div>
                           </div>
@@ -428,12 +428,12 @@ export default function LowStockAlertsPage() {
                       </td>
 
                       {/* SKU */}
-                      <td className="py-3.5 px-4 font-mono text-slate-600 font-medium text-[11px]">
+                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400 font-medium text-[11px]">
                         {item.sku}
                       </td>
 
                       {/* Category */}
-                      <td className="py-3.5 px-4 text-slate-700 font-medium">
+                      <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium">
                         {item.category}
                       </td>
 
@@ -442,19 +442,19 @@ export default function LowStockAlertsPage() {
                         <div className="inline-flex flex-col items-center gap-0.5">
                           {isCritical ? (
                             <>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-100 text-rose-700">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
                                 Critical
                               </span>
-                              <span className="font-mono font-bold text-rose-600 text-xs">
+                              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-xs">
                                 {item.currentStock} {item.unitType}
                               </span>
                             </>
                           ) : (
                             <>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-100 text-amber-800">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
                                 Low Stock
                               </span>
-                              <span className="font-mono font-bold text-slate-800 text-xs">
+                              <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs">
                                 {item.currentStock} {item.unitType}
                               </span>
                             </>
@@ -473,11 +473,11 @@ export default function LowStockAlertsPage() {
                               onChange={(e) =>
                                 setEditingThresholdValue(Number(e.target.value))
                               }
-                              className="w-14 px-1.5 py-0.5 text-xs font-mono font-bold border border-sky-400 rounded"
+                              className="w-14 px-1.5 py-0.5 text-xs font-mono font-bold border border-sky-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded"
                             />
                             <button
                               onClick={() => handleSaveThreshold(item.id)}
-                              className="p-1 bg-sky-600 text-white rounded text-[10px] font-bold"
+                              className="p-1 bg-sky-600 text-white rounded text-[10px] font-bold cursor-pointer"
                             >
                               ✓
                             </button>
@@ -485,11 +485,11 @@ export default function LowStockAlertsPage() {
                         ) : (
                           <button
                             onClick={() => handleStartEditThreshold(item)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 font-mono font-medium hover:border-sky-400 hover:bg-sky-50/50 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-medium hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50/50 dark:hover:bg-sky-950/50 transition-colors cursor-pointer"
                             title="Edit Minimum Threshold"
                           >
                             <span>{item.threshold}</span>
-                            <Pencil className="h-3 w-3 text-slate-400" />
+                            <Pencil className="h-3 w-3 text-slate-400 dark:text-slate-500" />
                           </button>
                         )}
                       </td>
@@ -498,7 +498,7 @@ export default function LowStockAlertsPage() {
                       <td className="py-3.5 px-5 text-right">
                         <button
                           onClick={() => handleRestockSingle(item)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-2xs"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-2xs cursor-pointer"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>Restock</span>
@@ -513,14 +513,14 @@ export default function LowStockAlertsPage() {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <div>Showing 1-{filteredAlerts.length} of 46 items</div>
           <div className="flex items-center gap-3">
-            <button className="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40">
+            <button className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-40 cursor-pointer">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="font-medium text-slate-700">Page 1 of 12</span>
-            <button className="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Page 1 of 12</span>
+            <button className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

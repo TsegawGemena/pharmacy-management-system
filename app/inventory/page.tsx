@@ -269,16 +269,16 @@ export default function InventoryPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             Inventory Management
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Monitor and manage your medicine stock levels and expiry dates.
           </p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#006699] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#005580] transition-colors shadow-xs"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#006699] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#005580] transition-colors shadow-xs cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           <span>Add New Product</span>
@@ -288,45 +288,45 @@ export default function InventoryPage() {
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total SKUs */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
-          <div className="flex items-center gap-2 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
-            <Package className="h-4 w-4 text-slate-600" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+            <Package className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             <span>TOTAL SKUS</span>
           </div>
-          <div className="text-3xl font-extrabold text-slate-800 mt-2.5 font-mono">
+          <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2.5 font-mono">
             1,248
           </div>
         </div>
 
         {/* Low Stock Items */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
-          <div className="flex items-center gap-2 text-amber-600 text-[11px] font-bold uppercase tracking-wider">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-[11px] font-bold uppercase tracking-wider">
+            <AlertTriangle className="h-4 w-4 text-amber-500 dark:text-amber-400" />
             <span>LOW STOCK ITEMS</span>
           </div>
-          <div className="text-3xl font-extrabold text-amber-600 mt-2.5 font-mono">
+          <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-2.5 font-mono">
             18
           </div>
         </div>
 
         {/* Critical Stock */}
-        <div className="bg-white rounded-xl border border-slate-200/90 border-l-4 border-l-rose-500 p-5 shadow-2xs">
-          <div className="flex items-center gap-2 text-rose-600 text-[11px] font-bold uppercase tracking-wider">
-            <AlertCircle className="h-4 w-4 text-rose-500" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 border-l-4 border-l-rose-500 dark:border-l-rose-500 p-5 shadow-2xs transition-colors">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-[11px] font-bold uppercase tracking-wider">
+            <AlertCircle className="h-4 w-4 text-rose-500 dark:text-rose-400" />
             <span>CRITICAL STOCK</span>
           </div>
-          <div className="text-3xl font-extrabold text-slate-800 mt-2.5 font-mono">
+          <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2.5 font-mono">
             5
           </div>
         </div>
 
         {/* Expiring Soon */}
-        <div className="bg-white rounded-xl border border-slate-200/90 border-l-4 border-l-orange-500 p-5 shadow-2xs">
-          <div className="flex items-center gap-2 text-orange-600 text-[11px] font-bold uppercase tracking-wider">
-            <Timer className="h-4 w-4 text-orange-500" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 border-l-4 border-l-orange-500 dark:border-l-orange-500 p-5 shadow-2xs transition-colors">
+          <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 text-[11px] font-bold uppercase tracking-wider">
+            <Timer className="h-4 w-4 text-orange-500 dark:text-orange-400" />
             <span>EXPIRING SOON</span>
           </div>
-          <div className="text-3xl font-extrabold text-slate-800 mt-2.5 font-mono">
+          <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2.5 font-mono">
             7
           </div>
         </div>
@@ -335,23 +335,23 @@ export default function InventoryPage() {
       {/* Main Content: Left Filter Sidebar + Right Inventory Table */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Filter Panel */}
-        <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs space-y-6">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <FilterIcon className="h-4 w-4 text-slate-600" />
-            <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+        <div className="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs space-y-6 transition-colors">
+          <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <FilterIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               Filters
             </h3>
           </div>
 
           {/* Category Filter */}
           <div className="space-y-2">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               CATEGORY
             </label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500 font-medium"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-sky-500 font-medium"
             >
               <option value="All Categories">All Categories</option>
               <option value="Antibiotics">Antibiotics</option>
@@ -365,7 +365,7 @@ export default function InventoryPage() {
 
           {/* Stock Status Radio */}
           <div className="space-y-2.5">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               STOCK STATUS
             </label>
             <div className="space-y-2">
@@ -377,14 +377,14 @@ export default function InventoryPage() {
               ].map((option) => (
                 <label
                   key={option.id}
-                  className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-700 select-none hover:text-slate-900"
+                  className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-700 dark:text-slate-300 select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <input
                     type="radio"
                     name="stockStatus"
                     checked={stockStatus === option.id}
                     onChange={() => setStockStatus(option.id as any)}
-                    className="h-3.5 w-3.5 text-[#006699] focus:ring-[#006699] border-slate-300"
+                    className="h-3.5 w-3.5 text-[#006699] focus:ring-[#006699] border-slate-300 dark:border-slate-600"
                   />
                   <span className="font-medium">{option.label}</span>
                 </label>
@@ -394,13 +394,13 @@ export default function InventoryPage() {
 
           {/* Expiry Status Dropdown */}
           <div className="space-y-2">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               EXPIRY STATUS
             </label>
             <select
               value={expiryStatus}
               onChange={(e) => setExpiryStatus(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500 font-medium"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-sky-500 font-medium"
             >
               <option value="Any Date">Any Date</option>
               <option value="Expiring Soon (<90d)">Expiring Soon (&lt;90d)</option>
@@ -420,7 +420,7 @@ export default function InventoryPage() {
                 setExpiryStatus("Any Date");
                 setSearchQuery("");
               }}
-              className="w-full py-1.5 text-xs text-sky-600 hover:text-sky-800 font-medium border border-sky-200 rounded-lg hover:bg-sky-50 transition-colors"
+              className="w-full py-1.5 text-xs text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 font-medium border border-sky-200 dark:border-sky-800 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/50 transition-colors cursor-pointer"
             >
               Reset Filters
             </button>
@@ -428,9 +428,9 @@ export default function InventoryPage() {
         </div>
 
         {/* Right Inventory Table */}
-        <div className="lg:col-span-9 bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div className="lg:col-span-9 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
           {/* Table Toolbar */}
-          <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
               <input
@@ -438,7 +438,7 @@ export default function InventoryPage() {
                 placeholder="Filter table..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs rounded-md border border-slate-200 text-slate-700 placeholder-slate-400 focus:outline-hidden focus:border-sky-500"
+                className="w-full pl-9 pr-4 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-sky-500"
               />
             </div>
 
@@ -446,14 +446,14 @@ export default function InventoryPage() {
               <button
                 onClick={handleExportCSV}
                 title="Export CSV"
-                className="p-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg transition-colors"
+                className="p-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
               >
                 <Download className="h-4 w-4" />
               </button>
               <button
                 onClick={handleRefresh}
                 title="Refresh Table"
-                className={`p-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg transition-all ${
+                className={`p-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-all cursor-pointer ${
                   isRefreshing ? "rotate-180 duration-300" : ""
                 }`}
               >
@@ -465,7 +465,7 @@ export default function InventoryPage() {
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-[13px]">
-              <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+              <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="py-3.5 px-5">PRODUCT NAME</th>
                   <th className="py-3.5 px-4">CATEGORY</th>
@@ -475,10 +475,10 @@ export default function InventoryPage() {
                   <th className="py-3.5 px-5 text-right font-mono">UNIT PRICE</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                    <td colSpan={6} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
                       No matching products found. Try adjusting your filters.
                     </td>
                   </tr>
@@ -490,19 +490,19 @@ export default function InventoryPage() {
                     const percentage = Math.min(100, Math.max(5, (item.stock / max) * 100));
 
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                      <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                         {/* Product Name */}
-                        <td className="py-3.5 px-5 font-semibold text-slate-800">
+                        <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                           {item.name}
                         </td>
 
                         {/* Category */}
-                        <td className="py-3.5 px-4 text-slate-600 font-medium">
+                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium">
                           {item.category}
                         </td>
 
                         {/* Batch No */}
-                        <td className="py-3.5 px-4 font-mono text-slate-600 font-medium">
+                        <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400 font-medium">
                           {item.batchNo}
                         </td>
 
@@ -513,20 +513,20 @@ export default function InventoryPage() {
                               <span
                                 className={`font-bold ${
                                   isCritical
-                                    ? "text-rose-600"
+                                    ? "text-rose-600 dark:text-rose-400"
                                     : isLow
-                                    ? "text-amber-600"
-                                    : "text-slate-700"
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-slate-700 dark:text-slate-300"
                                 }`}
                               >
                                 {item.stock}
                               </span>
-                              <span className="text-slate-400 text-[10px]">
+                              <span className="text-slate-400 dark:text-slate-500 text-[10px]">
                                 Min: {item.minStock}
                               </span>
                             </div>
                             {/* Bar container */}
-                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-300 ${
                                   isCritical
@@ -544,19 +544,19 @@ export default function InventoryPage() {
                         {/* Expiry Date Pill */}
                         <td className="py-3.5 px-4 text-center">
                           {item.isExpiringSoon ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                              <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                              <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
                               <span>{item.expiryDate}</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
                               {item.expiryDate}
                             </span>
                           )}
                         </td>
 
                         {/* Unit Price */}
-                        <td className="py-3.5 px-5 text-right font-mono font-bold text-slate-800">
+                        <td className="py-3.5 px-5 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
                           {item.unitPrice}
                         </td>
                       </tr>
@@ -568,13 +568,13 @@ export default function InventoryPage() {
           </div>
 
           {/* Pagination Footer */}
-          <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
             <div>Showing 1 to {filteredItems.length} of 1,248 entries</div>
             <div className="flex items-center gap-1">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Prev
               </button>
@@ -583,7 +583,7 @@ export default function InventoryPage() {
                 className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
                   currentPage === 1
                     ? "bg-[#0284c7] text-white"
-                    : "border border-slate-200 hover:bg-slate-50 text-slate-700"
+                    : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 1
@@ -593,7 +593,7 @@ export default function InventoryPage() {
                 className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
                   currentPage === 2
                     ? "bg-[#0284c7] text-white"
-                    : "border border-slate-200 hover:bg-slate-50 text-slate-700"
+                    : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 2
@@ -603,7 +603,7 @@ export default function InventoryPage() {
                 className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
                   currentPage === 3
                     ? "bg-[#0284c7] text-white"
-                    : "border border-slate-200 hover:bg-slate-50 text-slate-700"
+                    : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 3
@@ -611,7 +611,7 @@ export default function InventoryPage() {
               <span className="px-1 text-slate-400">...</span>
               <button
                 onClick={() => setCurrentPage((p) => p + 1)}
-                className="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600"
+                className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
               >
                 Next
               </button>

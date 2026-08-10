@@ -178,27 +178,27 @@ export default function SupplierManagementPage() {
 
       {/* Breadcrumb & Header */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-          <Link href="/inventory" className="hover:text-sky-600 flex items-center gap-1">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <Link href="/inventory" className="hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1">
             <Package className="h-3.5 w-3.5" />
             <span>Inventory</span>
           </Link>
           <span>&gt;</span>
-          <span className="text-slate-700 font-semibold">Suppliers</span>
+          <span className="text-slate-700 dark:text-slate-300 font-semibold">Suppliers</span>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               Supplier Management
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Manage approved pharmaceutical suppliers and track vendor performance.
             </p>
           </div>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#006699] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#005580] transition-colors shadow-xs"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#006699] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#005580] transition-colors shadow-xs cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Add New Supplier</span>
@@ -209,76 +209,76 @@ export default function SupplierManagementPage() {
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* TOTAL SUPPLIERS */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+            <span className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
               TOTAL SUPPLIERS
             </span>
-            <div className="p-2 bg-sky-50 text-sky-600 rounded-lg">
+            <div className="p-2 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 rounded-lg">
               <Truck className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 font-mono">24</span>
-            <span className="text-xs font-medium text-slate-500">Active</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">24</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Active</span>
           </div>
         </div>
 
         {/* PENDING DELIVERIES */}
-        <div className="bg-white rounded-xl border border-slate-200/90 border-l-4 border-l-amber-500 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 border-l-4 border-l-amber-500 dark:border-l-amber-500 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+            <span className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
               PENDING DELIVERIES
             </span>
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-lg">
               <Package className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 font-mono">5</span>
-            <span className="text-xs font-medium text-slate-500">Shipments expected</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">5</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Shipments expected</span>
           </div>
         </div>
 
         {/* AVG. FULFILLMENT */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+            <span className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
               AVG. FULFILLMENT
             </span>
-            <div className="p-2 bg-teal-50 text-teal-600 rounded-lg">
+            <div className="p-2 bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 rounded-lg">
               <Clock className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 font-mono">3.2</span>
-            <span className="text-xs font-medium text-slate-500">Days</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">3.2</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Days</span>
           </div>
         </div>
 
         {/* PROCUREMENT SPEND */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+            <span className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
               PROCUREMENT SPEND
             </span>
-            <div className="p-2 bg-slate-100 text-slate-600 rounded-lg">
+            <div className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg">
               <Wallet className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl lg:text-[26px] font-extrabold text-slate-800 font-mono">
+            <span className="text-2xl lg:text-[26px] font-extrabold text-slate-800 dark:text-slate-100 font-mono">
               $142.5k
             </span>
-            <span className="text-xs font-medium text-slate-500">This Month</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">This Month</span>
           </div>
         </div>
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
         {/* Search & Filter bar */}
-        <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3 flex-1">
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
@@ -287,14 +287,14 @@ export default function SupplierManagementPage() {
                 placeholder="Search supplier by name or ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 text-slate-700 placeholder-slate-400 focus:outline-hidden focus:border-sky-500"
+                className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-sky-500"
               />
             </div>
 
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500 font-medium"
+              className="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-sky-500 font-medium"
             >
               <option value="All Categories">All Categories</option>
               <option value="Medications">Medications</option>
@@ -308,9 +308,9 @@ export default function SupplierManagementPage() {
                 setCategoryFilter("All Categories");
                 setSearchQuery("");
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-600 hover:bg-slate-50 font-medium"
+              className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium cursor-pointer"
             >
-              <FilterIcon className="h-3.5 w-3.5 text-slate-500" />
+              <FilterIcon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
               <span>Filter</span>
             </button>
           </div>
@@ -319,7 +319,7 @@ export default function SupplierManagementPage() {
             <button
               onClick={handleExportCSV}
               title="Export Suppliers"
-              className="p-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg transition-colors"
+              className="p-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
             >
               <Download className="h-4 w-4" />
             </button>
@@ -329,7 +329,7 @@ export default function SupplierManagementPage() {
         {/* Suppliers Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-[13px]">
-            <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+            <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-3.5 px-6">SUPPLIER NAME</th>
                 <th className="py-3.5 px-6">CATEGORY</th>
@@ -339,10 +339,10 @@ export default function SupplierManagementPage() {
                 <th className="py-3.5 px-6 text-right">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredSuppliers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={6} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No suppliers found matching your query.
                   </td>
                 </tr>
@@ -353,7 +353,7 @@ export default function SupplierManagementPage() {
                   return (
                     <tr
                       key={supplier.id}
-                      className={`hover:bg-slate-50/60 transition-colors ${
+                      className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors ${
                         isInactive ? "opacity-75" : ""
                       }`}
                     >
@@ -363,29 +363,29 @@ export default function SupplierManagementPage() {
                           <div
                             className={`font-semibold ${
                               isInactive
-                                ? "text-slate-400 line-through"
-                                : "text-[#0284c7] hover:underline cursor-pointer"
+                                ? "text-slate-400 dark:text-slate-500 line-through"
+                                : "text-[#0284c7] dark:text-sky-400 hover:underline cursor-pointer"
                             }`}
                           >
                             {supplier.name}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-400 mt-0.5">
+                          <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
                             ID: {supplier.id}
                           </div>
                         </div>
                       </td>
 
                       {/* Category */}
-                      <td className="py-3.5 px-6 text-slate-700 font-medium">
+                      <td className="py-3.5 px-6 text-slate-700 dark:text-slate-300 font-medium">
                         {supplier.category}
                       </td>
 
                       {/* Contact */}
                       <td className="py-3.5 px-6">
-                        <div className="text-slate-800 font-medium">
+                        <div className="text-slate-800 dark:text-slate-200 font-medium">
                           {supplier.contact.name}
                         </div>
-                        <div className="text-[11px] font-mono text-slate-400">
+                        <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
                           {supplier.contact.email}
                         </div>
                       </td>
@@ -399,7 +399,7 @@ export default function SupplierManagementPage() {
                               className={`h-3.5 w-3.5 ${
                                 star <= supplier.rating
                                   ? "fill-amber-400 text-amber-400"
-                                  : "text-slate-200"
+                                  : "text-slate-200 dark:text-slate-700"
                               }`}
                             />
                           ))}
@@ -409,12 +409,12 @@ export default function SupplierManagementPage() {
                       {/* Status */}
                       <td className="py-3.5 px-6">
                         {supplier.status === "Active" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                             <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                             Inactive
                           </span>
@@ -429,7 +429,7 @@ export default function SupplierManagementPage() {
                               supplier.name
                             )}`}
                             title="Create PO with this Supplier"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#006699] hover:bg-sky-50 rounded-lg transition-colors border border-sky-200"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#006699] dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/50 rounded-lg transition-colors border border-sky-200 dark:border-sky-800"
                           >
                             <FilePlus2 className="h-3 w-3" />
                             <span>Order</span>
@@ -445,20 +445,20 @@ export default function SupplierManagementPage() {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <div>Showing 1-{filteredSuppliers.length} of 24 Suppliers</div>
           <div className="flex items-center gap-3">
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40"
+              className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-40 cursor-pointer"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="font-medium text-slate-700">Page {currentPage} of 6</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Page {currentPage} of 6</span>
             <button
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600"
+              className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

@@ -11,11 +11,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // If on login route, render standalone full-screen page
   if (pathname === "/login") {
-    return <div className="min-h-screen bg-white">{children}</div>;
+    return <div className="min-h-screen bg-white dark:bg-[#090d16] text-slate-800 dark:text-slate-100">{children}</div>;
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc]">
+    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 transition-colors">
       {/* Sidebar */}
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 

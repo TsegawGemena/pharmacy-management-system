@@ -13,12 +13,12 @@ export default function ExpiryCategoryDonut() {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs space-y-4 flex flex-col justify-between transition-colors">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-bold text-slate-800 tracking-tight">
+        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
           Risk by Category
         </h3>
-        <button className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-50">
+        <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800">
           <SlidersHorizontal className="h-4 w-4" />
         </button>
       </div>
@@ -33,8 +33,8 @@ export default function ExpiryCategoryDonut() {
               cy="50"
               r="38"
               fill="transparent"
-              stroke="#f1f5f9"
               strokeWidth="13"
+              className="stroke-slate-100 dark:stroke-slate-800"
             />
 
             {/* Antibiotics (35%) -> circ = 238.76 -> 83.56 */}
@@ -107,7 +107,7 @@ export default function ExpiryCategoryDonut() {
                 className="h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: cat.color }}
               />
-              <span className="text-slate-700 font-medium">{cat.name}</span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">{cat.name}</span>
             </div>
           ))}
         </div>

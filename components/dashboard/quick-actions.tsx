@@ -11,10 +11,10 @@ import {
 
 export default function QuickActions() {
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex flex-col justify-between h-full">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors flex flex-col justify-between h-full">
       {/* Title */}
       <div>
-        <h2 className="text-base lg:text-[17px] font-bold text-slate-800 tracking-tight">
+        <h2 className="text-base lg:text-[17px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">
           Quick Actions
         </h2>
       </div>
@@ -33,7 +33,7 @@ export default function QuickActions() {
         {/* Action 2: + Add Product (Outline blue) */}
         <Link
           href="/products"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white hover:bg-sky-50/60 border border-[#0284c7] text-[#0284c7] text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
+          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white dark:bg-slate-800/80 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-[#0284c7] text-[#0284c7] dark:text-sky-400 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
         >
           <PlusCircle className="h-4 w-4" />
           <span>+ Add Product</span>
@@ -42,7 +42,7 @@ export default function QuickActions() {
         {/* Action 3: + Add Stock (Outline blue) */}
         <Link
           href="/inventory"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white hover:bg-sky-50/60 border border-[#0284c7] text-[#0284c7] text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
+          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white dark:bg-slate-800/80 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-[#0284c7] text-[#0284c7] dark:text-sky-400 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
         >
           <PackagePlus className="h-4 w-4" />
           <span>+ Add Stock</span>
@@ -51,9 +51,9 @@ export default function QuickActions() {
         {/* Action 4: View Invoices (Neutral outline) */}
         <Link
           href="/invoices"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
+          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
         >
-          <ReceiptText className="h-4 w-4 text-slate-500" />
+          <ReceiptText className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <span>View Invoices</span>
         </Link>
       </div>

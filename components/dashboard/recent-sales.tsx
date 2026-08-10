@@ -36,15 +36,15 @@ export default function RecentSales() {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
       {/* Card Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-        <h2 className="text-base lg:text-[17px] font-bold text-slate-800 tracking-tight">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+        <h2 className="text-base lg:text-[17px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">
           Recent Sales
         </h2>
         <Link
           href="/invoices"
-          className="text-xs sm:text-sm font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1 transition-colors"
+          className="text-xs sm:text-sm font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 flex items-center gap-1 transition-colors"
         >
           <span>View All</span>
           <ArrowRight className="h-3.5 w-3.5" />
@@ -55,7 +55,7 @@ export default function RecentSales() {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <th className="py-3 px-6">Invoice</th>
               <th className="py-3 px-6">Product / Item</th>
               <th className="py-3 px-6">Items</th>
@@ -64,38 +64,38 @@ export default function RecentSales() {
               <th className="py-3 px-6 text-center">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
             {sales.map((sale) => (
               <tr
                 key={sale.invoice}
-                className="hover:bg-slate-50/70 transition-colors"
+                className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
               >
-                <td className="py-3.5 px-6 font-mono font-medium text-sky-600">
+                <td className="py-3.5 px-6 font-mono font-medium text-sky-600 dark:text-sky-400">
                   <Link href={`/invoices?id=${sale.invoice}`} className="hover:underline">
                     {sale.invoice}
                   </Link>
                 </td>
-                <td className="py-3.5 px-6 font-medium text-slate-800">
+                <td className="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
                   {sale.product}
                 </td>
-                <td className="py-3.5 px-6 text-slate-600 font-mono">
+                <td className="py-3.5 px-6 text-slate-600 dark:text-slate-400 font-mono">
                   {sale.items}
                 </td>
-                <td className="py-3.5 px-6 font-mono font-bold text-slate-800">
+                <td className="py-3.5 px-6 font-mono font-bold text-slate-800 dark:text-slate-100">
                   {sale.amount}
                 </td>
-                <td className="py-3.5 px-6 text-slate-700">
+                <td className="py-3.5 px-6 text-slate-700 dark:text-slate-300">
                   <div className="flex items-center gap-1.5">
                     {sale.paymentType === "cash" ? (
-                      <Banknote className="h-4 w-4 text-emerald-600" />
+                      <Banknote className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     ) : (
-                      <Smartphone className="h-4 w-4 text-sky-600" />
+                      <Smartphone className="h-4 w-4 text-sky-600 dark:text-sky-400" />
                     )}
                     <span>{sale.paymentMethod}</span>
                   </div>
                 </td>
                 <td className="py-3.5 px-6 text-center">
-                  <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 border border-teal-200/60">
+                  <span className="inline-flex items-center rounded-full bg-teal-50 dark:bg-teal-950/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
                     {sale.status}
                   </span>
                 </td>

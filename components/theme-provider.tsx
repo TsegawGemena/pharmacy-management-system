@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "light" | "dark" | "night";
+type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
@@ -17,48 +17,46 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem("gammo-theme") as Theme | null;
-    if (savedTheme && (savedTheme === "light" || savedTheme === "dark" || savedTheme === "night")) {
-      setThemeState(savedTheme);
-      applyThemeClass(savedTheme);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setThemeState("dark");
-      applyThemeClass("dark");
-    }
-  }, []);
-
   const applyThemeClass = (newTheme: Theme) => {
+    if (typeof document === "undefined") return;
     const root = document.documentElement;
     root.classList.remove("light", "dark", "night");
-    if (newTheme === "dark" || newTheme === "night") {
+    if (newTheme === "dark") {
       root.classList.add("dark");
-      if (newTheme === "night") {
-        root.classList.add("night");
-      }
     } else {
       root.classList.add("light");
     }
   };
 
+  useEffect(() => {
+    setMounted(true);
+    const savedTheme = localStorage.getItem("gammo-theme") as Theme | null;
+    if (savedTheme && (savedTheme === "light" || savedTheme === "dark")) {
+      setThemeState(savedTheme);
+      applyThemeClass(savedTheme);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setThemeState("dark");
+      applyThemeClass("dark");
+    } else {
+      setThemeState("light");
+      applyThemeClass("light");
+    }
+  }, []);
+
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem("gammo-theme", newTheme);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("gammo-theme", newTheme);
+    }
     applyThemeClass(newTheme);
   };
 
   const toggleTheme = () => {
-    if (theme === "light") {
-      setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("night");
-    } else {
-      setTheme("light");
-    }
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
   };
 
-  const isDark = theme === "dark" || theme === "night";
+  const isDark = theme === "dark";
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, isDark }}>

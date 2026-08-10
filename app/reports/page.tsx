@@ -63,10 +63,10 @@ export default function ReportsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             Reports & Analytics
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Detailed insights into pharmacy performance and inventory trends.
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function ReportsPage() {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="pl-8 pr-4 py-2 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500 shadow-2xs"
+              className="pl-8 pr-4 py-2 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-sky-500 shadow-2xs"
             >
               <option value="Last 7 Days">Last 7 Days</option>
               <option value="Last 30 Days">Last 30 Days</option>
@@ -90,7 +90,7 @@ export default function ReportsPage() {
           {/* Export Data Button */}
           <button
             onClick={handleExportData}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer"
           >
             <Download className="h-4 w-4" />
             <span>Export Data</span>
@@ -101,89 +101,89 @@ export default function ReportsPage() {
       {/* 4 KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* TOTAL REVENUE */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               TOTAL REVENUE
             </span>
-            <div className="p-2 bg-sky-50 text-sky-600 rounded-lg">
+            <div className="p-2 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 rounded-lg">
               <DollarSign className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 font-mono">
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
               742,500
             </span>
-            <span className="text-xs font-semibold text-slate-500">ETB</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ETB</span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold mt-1">
+          <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
             <TrendingUp className="h-3.5 w-3.5" />
             <span>+12% vs last period</span>
           </div>
         </div>
 
         {/* NET PROFIT */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               NET PROFIT
             </span>
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-lg">
               <Wallet className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 font-mono">
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
               185,625
             </span>
-            <span className="text-xs font-semibold text-slate-500">ETB</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ETB</span>
           </div>
           <div className="mt-1">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">
               25% margin
             </span>
           </div>
         </div>
 
         {/* AVG TRANSACTION */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               AVG TRANSACTION
             </span>
-            <div className="p-2 bg-sky-50 text-sky-600 rounded-lg">
+            <div className="p-2 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 rounded-lg">
               <Receipt className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 font-mono">
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
               420
             </span>
-            <span className="text-xs font-semibold text-slate-500">ETB</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ETB</span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold mt-1">
+          <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
             <TrendingUp className="h-3.5 w-3.5" />
             <span>+5% vs last period</span>
           </div>
         </div>
 
         {/* INVENTORY TURNOVER */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               INVENTORY TURNOVER
             </span>
-            <div className="p-2 bg-orange-50 text-orange-500 rounded-lg">
+            <div className="p-2 bg-orange-50 dark:bg-orange-950/60 text-orange-500 dark:text-orange-400 rounded-lg">
               <RotateCw className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 font-mono">
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
               4.2x
             </span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-amber-600 font-medium mt-1">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+          <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 shrink-0" />
             <span>Slightly below target (4.5x)</span>
           </div>
         </div>
@@ -202,19 +202,19 @@ export default function ReportsPage() {
       {/* Bottom Row: Top Performing Products (50%) + Low Turnover / Dead Stock (50%) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Top Performing Products */}
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-          <div className="p-5 border-b border-slate-100">
-            <h3 className="text-base font-bold text-slate-800 tracking-tight">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
+          <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               Top Performing Products
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Highest revenue drivers this period.
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-[13px]">
-              <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+              <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="py-3 px-5">PRODUCT NAME</th>
                   <th className="py-3 px-4 text-center font-mono">UNITS SOLD</th>
@@ -222,7 +222,7 @@ export default function ReportsPage() {
                   <th className="py-3 px-5 text-right font-mono">GROWTH</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {[
                   {
                     name: "Amoxicillin 500mg Caps",
@@ -249,17 +249,17 @@ export default function ReportsPage() {
                     growth: "+2%",
                   },
                 ].map((item) => (
-                  <tr key={item.name} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-5 font-semibold text-slate-800">
+                  <tr key={item.name} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                       {item.name}
                     </td>
-                    <td className="py-3.5 px-4 text-center font-mono text-slate-700">
+                    <td className="py-3.5 px-4 text-center font-mono text-slate-700 dark:text-slate-300">
                       {item.sold}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
                       {item.revenue}
                     </td>
-                    <td className="py-3.5 px-5 text-right font-mono font-bold text-emerald-600">
+                    <td className="py-3.5 px-5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                       {item.growth}
                     </td>
                   </tr>
@@ -270,19 +270,19 @@ export default function ReportsPage() {
         </div>
 
         {/* Low Turnover / Dead Stock */}
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-          <div className="p-5 border-b border-slate-100">
-            <h3 className="text-base font-bold text-slate-800 tracking-tight">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
+          <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               Low Turnover / Dead Stock
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Items tying up capital with slow movement.
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-[13px]">
-              <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+              <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="py-3 px-5">PRODUCT NAME</th>
                   <th className="py-3 px-4 text-center font-mono">STOCK QTY</th>
@@ -290,45 +290,45 @@ export default function ReportsPage() {
                   <th className="py-3 px-5 text-center">STATUS</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {[
                   {
                     name: "Specialized Knee Brace (L)",
                     qty: 12,
                     value: "24,000",
                     status: "Overstocked",
-                    statusStyle: "bg-rose-50 text-rose-700 border border-rose-200",
+                    statusStyle: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60",
                   },
                   {
                     name: "Rare Herbal Supp. X",
                     qty: 45,
                     value: "13,500",
                     status: "Slow Moving",
-                    statusStyle: "bg-amber-50 text-amber-700 border border-amber-200",
+                    statusStyle: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60",
                   },
                   {
                     name: "Obsolete Test Kit A",
                     qty: 8,
                     value: "4,000",
                     status: "Near Expiry",
-                    statusStyle: "bg-rose-50 text-rose-700 border border-rose-200",
+                    statusStyle: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60",
                   },
                   {
                     name: "Niche Derm Cream",
                     qty: 20,
                     value: "18,000",
                     status: "Slow Moving",
-                    statusStyle: "bg-amber-50 text-amber-700 border border-amber-200",
+                    statusStyle: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60",
                   },
                 ].map((item) => (
-                  <tr key={item.name} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-5 font-semibold text-slate-800">
+                  <tr key={item.name} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                       {item.name}
                     </td>
-                    <td className="py-3.5 px-4 text-center font-mono text-slate-700">
+                    <td className="py-3.5 px-4 text-center font-mono text-slate-700 dark:text-slate-300">
                       {item.qty}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
                       {item.value}
                     </td>
                     <td className="py-3.5 px-5 text-center">

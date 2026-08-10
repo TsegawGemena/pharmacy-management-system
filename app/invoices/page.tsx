@@ -143,10 +143,10 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             Invoices
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Manage and track billing across all points of sale.
           </p>
         </div>
@@ -154,15 +154,15 @@ export default function InvoicesPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleGenerateStatement}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors shadow-2xs cursor-pointer"
           >
-            <FileText className="h-4 w-4 text-slate-600" />
+            <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             <span>Generate Statement</span>
           </button>
 
           <button
             onClick={handleExportReport}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer"
           >
             <Download className="h-4 w-4" />
             <span>Export Report</span>
@@ -173,73 +173,73 @@ export default function InvoicesPage() {
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* TOTAL INVOICED */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             TOTAL INVOICED
           </span>
-          <div className="text-2xl lg:text-[26px] font-extrabold text-slate-800 font-mono mt-2">
+          <div className="text-2xl lg:text-[26px] font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
             ETB 142,500
           </div>
-          <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold mt-1">
+          <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
             <TrendingUp className="h-3.5 w-3.5" />
             <span>+12% this month</span>
           </div>
         </div>
 
         {/* PAID */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             PAID
           </span>
-          <div className="text-2xl lg:text-[26px] font-extrabold text-emerald-700 font-mono mt-2">
+          <div className="text-2xl lg:text-[26px] font-extrabold text-emerald-700 dark:text-emerald-400 font-mono mt-2">
             ETB 98,200
           </div>
-          <div className="text-xs text-slate-500 font-medium mt-1">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
             342 Invoices
           </div>
         </div>
 
         {/* PENDING */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             PENDING
           </span>
-          <div className="text-2xl lg:text-[26px] font-extrabold text-amber-700 font-mono mt-2">
+          <div className="text-2xl lg:text-[26px] font-extrabold text-amber-700 dark:text-amber-400 font-mono mt-2">
             ETB 32,100
           </div>
-          <div className="text-xs text-slate-500 font-medium mt-1">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
             45 Invoices
           </div>
         </div>
 
         {/* OVERDUE */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs relative overflow-hidden transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
               OVERDUE
             </span>
-            <div className="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
+            <div className="p-1.5 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-lg">
               <AlertTriangle className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-2xl lg:text-[26px] font-extrabold text-rose-600 font-mono mt-2">
+          <div className="text-2xl lg:text-[26px] font-extrabold text-rose-600 dark:text-rose-400 font-mono mt-2">
             ETB 12,200
           </div>
-          <div className="text-xs text-slate-500 font-medium mt-1">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
             12 Invoices
           </div>
         </div>
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
         {/* Filter Bar */}
-        <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500 font-medium shadow-2xs"
+              className="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-sky-500 font-medium shadow-2xs"
             >
               <option value="All Statuses">All Statuses</option>
               <option value="Paid">Paid</option>
@@ -250,7 +250,7 @@ export default function InvoicesPage() {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:border-sky-500 font-medium shadow-2xs"
+              className="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-sky-500 font-medium shadow-2xs"
             >
               <option value="Last 7 Days">Last 7 Days</option>
               <option value="Last 30 Days">Last 30 Days</option>
@@ -261,9 +261,9 @@ export default function InvoicesPage() {
 
           <button
             onClick={() => showToast("Opening advanced filters")}
-            className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-600 hover:bg-slate-50 font-medium shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium shadow-2xs cursor-pointer"
           >
-            <SlidersHorizontal className="h-3.5 w-3.5 text-slate-500" />
+            <SlidersHorizontal className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
             <span>More Filters</span>
           </button>
         </div>
@@ -271,7 +271,7 @@ export default function InvoicesPage() {
         {/* Invoices Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-[13px]">
-            <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+            <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-3.5 px-6 font-mono">Invoice ID</th>
                 <th className="py-3.5 px-6">Customer Name</th>
@@ -282,60 +282,60 @@ export default function InvoicesPage() {
                 <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredInvoices.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No invoices matching filter criteria.
                   </td>
                 </tr>
               ) : (
                 filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr key={inv.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                     {/* ID */}
-                    <td className="py-3.5 px-6 font-mono font-bold text-slate-800">
+                    <td className="py-3.5 px-6 font-mono font-bold text-slate-800 dark:text-slate-100">
                       {inv.id}
                     </td>
 
                     {/* Customer */}
-                    <td className="py-3.5 px-6 font-medium text-slate-800">
+                    <td className="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
                       {inv.customerName}
                     </td>
 
                     {/* Date */}
-                    <td className="py-3.5 px-5 text-slate-600">
+                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400">
                       {inv.date}
                     </td>
 
                     {/* Amount */}
-                    <td className="py-3.5 px-5 text-right font-mono font-bold text-slate-800">
+                    <td className="py-3.5 px-5 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
                       {inv.amount}
                     </td>
 
                     {/* Payment Method */}
-                    <td className="py-3.5 px-5 text-slate-700">
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
                       {inv.paymentMethod}
                     </td>
 
                     {/* Status Pill */}
                     <td className="py-3.5 px-5 text-center">
                       {inv.status === "Paid" && (
-                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
                           Paid
                         </span>
                       )}
                       {inv.status === "Pending" && (
-                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
                           Pending
                         </span>
                       )}
                       {inv.status === "Overdue" && (
-                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                           Overdue
                         </span>
                       )}
                       {inv.status === "Cancelled" && (
-                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                           Cancelled
                         </span>
                       )}
@@ -345,7 +345,7 @@ export default function InvoicesPage() {
                     <td className="py-3.5 px-5 text-right">
                       <button
                         onClick={() => showToast(`Printing receipt for ${inv.id}`)}
-                        className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded"
+                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
                         title="Print Invoice"
                       >
                         <Printer className="h-4 w-4" />
@@ -359,13 +359,13 @@ export default function InvoicesPage() {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <div>Showing 1 to {filteredInvoices.length} of 450 entries</div>
           <div className="flex items-center gap-1">
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40"
+              className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-40"
             >
               Previous
             </button>
@@ -374,7 +374,7 @@ export default function InvoicesPage() {
               className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
                 currentPage === 1
                   ? "bg-[#0284c7] text-white"
-                  : "border border-slate-200 hover:bg-slate-50 text-slate-700"
+                  : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
               }`}
             >
               1
@@ -384,7 +384,7 @@ export default function InvoicesPage() {
               className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
                 currentPage === 2
                   ? "bg-[#0284c7] text-white"
-                  : "border border-slate-200 hover:bg-slate-50 text-slate-700"
+                  : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
               }`}
             >
               2
@@ -394,7 +394,7 @@ export default function InvoicesPage() {
               className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
                 currentPage === 3
                   ? "bg-[#0284c7] text-white"
-                  : "border border-slate-200 hover:bg-slate-50 text-slate-700"
+                  : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
               }`}
             >
               3
@@ -402,7 +402,7 @@ export default function InvoicesPage() {
             <span className="px-1 text-slate-400">...</span>
             <button
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-600"
+              className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
             >
               Next
             </button>

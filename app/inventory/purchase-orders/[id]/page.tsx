@@ -141,55 +141,55 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
       </div>
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 print:hidden">
-        <Link href="/inventory" className="hover:text-sky-600">
+      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 print:hidden">
+        <Link href="/inventory" className="hover:text-sky-600 dark:hover:text-sky-400">
           Inventory
         </Link>
         <span>&gt;</span>
-        <Link href="/inventory/purchase-orders" className="hover:text-sky-600">
+        <Link href="/inventory/purchase-orders" className="hover:text-sky-600 dark:hover:text-sky-400">
           Purchase Orders
         </Link>
         <span>&gt;</span>
-        <span className="text-slate-700 font-semibold font-mono">{poId}</span>
+        <span className="text-slate-700 dark:text-slate-300 font-semibold font-mono">{poId}</span>
       </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               Purchase Order Details
             </h2>
             {/* Status badge */}
             {status === "SHIPPED" && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">
                 <Truck className="h-3.5 w-3.5" />
                 SHIPPED
               </span>
             )}
             {status === "RECEIVED" && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 RECEIVED
               </span>
             )}
             {status === "CANCELLED" && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                 <Ban className="h-3.5 w-3.5" />
                 CANCELLED
               </span>
             )}
           </div>
-          <p className="text-xs font-mono text-slate-500 mt-1">{poId}</p>
+          <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">{poId}</p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3 print:hidden">
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-lg transition-colors shadow-2xs cursor-pointer"
           >
-            <Printer className="h-4 w-4 text-slate-600" />
+            <Printer className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             <span>Print PO</span>
           </button>
 
@@ -197,14 +197,14 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
             <>
               <button
                 onClick={handleCancelOrder}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 rounded-lg transition-colors shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors shadow-2xs cursor-pointer"
               >
                 <span>Cancel Order</span>
               </button>
 
               <button
                 onClick={() => setIsReceiveModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer"
               >
                 <PackageCheck className="h-4 w-4" />
                 <span>Receive Items</span>
@@ -219,22 +219,22 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
         {/* Left Column (col-span-8) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Supplier Information Card */}
-          <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
-            <div className="flex items-center gap-2 text-slate-800 font-bold text-sm border-b border-slate-100 pb-3">
-              <Building2 className="h-4 w-4 text-sky-600" />
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-2xs space-y-4 transition-colors">
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-sm border-b border-slate-100 dark:border-slate-800 pb-3">
+              <Building2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />
               <span>Supplier Information</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
               {/* Company */}
               <div className="space-y-1.5">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   COMPANY
                 </span>
-                <div className="font-bold text-slate-800 text-sm">
+                <div className="font-bold text-slate-800 dark:text-slate-100 text-sm">
                   PharmaCorp East Africa
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Bole Sub-city, Woreda 03<br />
                   Addis Ababa, Ethiopia
                 </p>
@@ -242,20 +242,20 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
 
               {/* Contact & Delivery */}
               <div className="space-y-1.5">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   CONTACT & DELIVERY
                 </span>
-                <div className="space-y-1.5 text-xs text-slate-700">
+                <div className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
                   <div className="flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                     <span className="font-mono">orders@pharmacorp.ea</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                     <span className="font-mono">+251 11 662 4321</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-slate-800">
-                    <Calendar className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+                  <div className="flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200">
+                    <Calendar className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
                     <span>Expected: Oct 18, 2023</span>
                   </div>
                 </div>
@@ -264,22 +264,22 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
           </div>
 
           {/* Order Items Card */}
-          <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
-                <div className="p-1 bg-sky-100 text-[#006699] rounded">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-2xs space-y-4 transition-colors">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-sm">
+                <div className="p-1 bg-sky-100 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400 rounded">
                   <Package className="h-3.5 w-3.5" />
                 </div>
                 <span>Order Items</span>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                 2 Items
               </span>
             </div>
 
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
               <table className="w-full text-left text-xs sm:text-[13px]">
-                <thead className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+                <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="py-3 px-4">PRODUCT</th>
                     <th className="py-3 px-4 font-mono">SKU / NDC</th>
@@ -288,23 +288,23 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
                     <th className="py-3 px-4 font-mono text-right">SUBTOTAL</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {orderItems.map((item) => (
-                    <tr key={item.sku} className="hover:bg-slate-50/50">
+                    <tr key={item.sku} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-800">{item.name}</div>
-                        <div className="text-[11px] text-slate-400">{item.pack}</div>
+                        <div className="font-bold text-slate-800 dark:text-slate-200">{item.name}</div>
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500">{item.pack}</div>
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 font-medium">
+                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400 font-medium">
                         {item.sku}
                       </td>
-                      <td className="py-3.5 px-4 text-center font-mono font-bold text-slate-800">
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-slate-800 dark:text-slate-100">
                         {item.qty}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-700">
+                      <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
                         {item.unitPrice}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
                         {item.subtotal}
                       </td>
                     </tr>
@@ -318,37 +318,37 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
         {/* Right Column (col-span-4) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Order Summary Card */}
-          <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
-            <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
-              <CreditCard className="h-4 w-4 text-sky-600" />
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-2xs space-y-4 transition-colors">
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-sm">
+              <CreditCard className="h-4 w-4 text-sky-600 dark:text-sky-400" />
               <span>Order Summary</span>
             </div>
 
             <div className="space-y-3 text-xs sm:text-sm">
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                 <span>Subtotal</span>
-                <span className="font-mono font-medium text-slate-800">
+                <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
                   41,000.00 ETB
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                 <span>Tax (15% VAT)</span>
-                <span className="font-mono font-medium text-slate-800">
+                <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
                   3,000.00 ETB
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                 <span>Shipping</span>
-                <span className="font-mono font-medium text-slate-800">
+                <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
                   1,200.00 ETB
                 </span>
               </div>
 
-              <div className="border-t border-slate-200 pt-3 flex items-baseline justify-between">
-                <span className="text-sm font-bold text-slate-800">Total</span>
-                <span className="text-xl sm:text-2xl font-extrabold text-[#006699] font-mono">
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-3 flex items-baseline justify-between">
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Total</span>
+                <span className="text-xl sm:text-2xl font-extrabold text-[#006699] dark:text-sky-400 font-mono">
                   45,200.00 ETB
                 </span>
               </div>
@@ -356,13 +356,13 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
           </div>
 
           {/* Timeline Card */}
-          <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
-            <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
-              <History className="h-4 w-4 text-sky-600" />
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-2xs space-y-4 transition-colors">
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-sm">
+              <History className="h-4 w-4 text-sky-600 dark:text-sky-400" />
               <span>Timeline</span>
             </div>
 
-            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
               {timeline.map((step, idx) => {
                 const Icon = step.icon;
                 return (
@@ -375,13 +375,13 @@ export default function PurchaseOrderDetailsPage({ params }: PageProps) {
                     </div>
                     {/* Step details */}
                     <div>
-                      <div className="text-xs font-bold text-slate-800">
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
                         {step.title}
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                         {step.detail}
                       </p>
-                      <span className="text-[10px] font-medium text-slate-400 mt-0.5 block">
+                      <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5 block">
                         {step.time}
                       </span>
                     </div>
