@@ -104,6 +104,7 @@ const CATALOG_ITEMS: PosProduct[] = [
 ];
 
 export default function PosPage() {
+  const [products, setProducts] = useState<PosProduct[]>(CATALOG_ITEMS);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [selectedCustomer, setSelectedCustomer] = useState("Walking Customer");
@@ -151,10 +152,15 @@ export default function PosPage() {
 
   // Cart operations
   const handleAddToCart = (product: PosProduct) => {
-    if (product.stock === 0) {
-      showToast(`${product.name} is currently out of stock`);
+    const currentProduct = products.find((p) => p.id === product.id) || product;
+    const existingInCart = cart.find((item) => item.id === product.id);
+    const inCartQty = existingInCart ? existingInCart.qty : 0;
+
+    if (inCartQty >= currentProduct.stock) {
+      showToast(`No more stock available for ${product.name}`);
       return;
     }
+
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
@@ -172,15 +178,20 @@ export default function PosPage() {
         },
       ];
     });
-    showToast(`Added ${product.name} to cart`);
+    showToast(`Added ${product.name} to current sale`);
   };
 
   const handleUpdateQty = (id: string, delta: number) => {
+    const product = products.find((p) => p.id === id);
     setCart((prev) =>
       prev
         .map((item) => {
           if (item.id === id) {
             const newQty = item.qty + delta;
+            if (delta > 0 && product && newQty > product.stock) {
+              showToast(`Only ${product.stock} units available in stock`);
+              return item;
+            }
             return newQty > 0 ? { ...item, qty: newQty } : null;
           }
           return item;
@@ -207,14 +218,30 @@ export default function PosPage() {
   };
 
   const handleCompleteSale = () => {
-    showToast(`Payment of ${total.toFixed(2)} ETB confirmed! Receipt printed.`);
+    // Permanently deduct purchased quantities from product inventory
+    setProducts((prevProducts) =>
+      prevProducts.map((prod) => {
+        const cartItem = cart.find((c) => c.id === prod.id);
+        if (cartItem) {
+          const updatedStock = Math.max(0, prod.stock - cartItem.qty);
+          return {
+            ...prod,
+            stock: updatedStock,
+            stockUnit: updatedStock === 0 ? "Out of Stock" : `${updatedStock} units`,
+          };
+        }
+        return prod;
+      })
+    );
+
+    showToast(`Payment of ${total.toFixed(2)} ETB confirmed! Stock updated.`);
     setIsPaymentModalOpen(false);
     setCart([]);
     setInvNumber(`#INV-2023-${Math.floor(100 + Math.random() * 900)}`);
   };
 
   const filteredCatalog = useMemo(() => {
-    return CATALOG_ITEMS.filter((item) => {
+    return products.filter((item) => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = item.name.toLowerCase().includes(q);
@@ -230,7 +257,7 @@ export default function PosPage() {
       }
       return true;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory]);
 
   return (
     <div className="space-y-6">
@@ -279,11 +306,10 @@ export default function PosPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                    selectedCategory === cat
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${selectedCategory === cat
                       ? "bg-[#006699] text-white shadow-2xs"
                       : "bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700"
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>
@@ -305,17 +331,19 @@ export default function PosPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredCatalog.map((product) => {
-                  const isOutOfStock = product.stock === 0;
+                  const cartItem = cart.find((item) => item.id === product.id);
+                  const inCartQty = cartItem ? cartItem.qty : 0;
+                  const availableStock = Math.max(0, product.stock - inCartQty);
+                  const isOutOfStock = availableStock === 0;
 
                   return (
                     <tr
                       key={product.id}
                       onClick={() => !isOutOfStock && handleAddToCart(product)}
-                      className={`transition-colors ${
-                        isOutOfStock
+                      className={`transition-colors ${isOutOfStock
                           ? "opacity-60 cursor-not-allowed bg-slate-50/30 dark:bg-slate-800/20"
                           : "hover:bg-sky-50/40 dark:hover:bg-slate-800/60 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       {/* Product Name */}
                       <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
@@ -333,13 +361,23 @@ export default function PosPage() {
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                             Out of Stock
                           </span>
-                        ) : product.stock <= 20 ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                            {product.stockUnit}
+                        ) : availableStock <= 20 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                            <span>{availableStock} units</span>
+                            {inCartQty > 0 && (
+                              <span className="text-[9.5px] font-medium opacity-75">
+                                (-{inCartQty})
+                              </span>
+                            )}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
-                            {product.stockUnit}
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
+                            <span>{availableStock} units</span>
+                            {inCartQty > 0 && (
+                              <span className="text-[9.5px] font-medium opacity-75">
+                                (-{inCartQty})
+                              </span>
+                            )}
                           </span>
                         )}
                       </td>
@@ -357,7 +395,8 @@ export default function PosPage() {
                             e.stopPropagation();
                             handleAddToCart(product);
                           }}
-                          className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-sky-100 dark:hover:bg-sky-950 text-slate-700 dark:text-slate-300 hover:text-sky-700 dark:hover:text-sky-400 disabled:opacity-40"
+                          className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-sky-100 dark:hover:bg-sky-950 text-slate-700 dark:text-slate-300 hover:text-sky-700 dark:hover:text-sky-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={isOutOfStock ? "Out of Stock" : `Add ${product.name}`}
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </button>
@@ -385,7 +424,7 @@ export default function PosPage() {
 
           {/* Customer Dropdown */}
           <div>
-            <div className="relative">
+            {/* <div className="relative">
               <select
                 value={selectedCustomer}
                 onChange={(e) => setSelectedCustomer(e.target.value)}
@@ -398,7 +437,7 @@ export default function PosPage() {
                 <option value="+ Add Customer">+ Add Customer</option>
               </select>
               <User className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-            </div>
+            </div> */}
           </div>
 
           {/* Cart Item Cards List */}
@@ -410,6 +449,9 @@ export default function PosPage() {
             ) : (
               cart.map((item) => {
                 const itemTotal = item.price * item.qty;
+                const product = products.find((p) => p.id === item.id);
+                const isMaxReached = product ? item.qty >= product.stock : false;
+
                 return (
                   <div
                     key={item.id}
@@ -439,6 +481,7 @@ export default function PosPage() {
                         <button
                           onClick={() => handleUpdateQty(item.id, -1)}
                           className="px-2 py-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold"
+                          title="Decrease quantity"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
@@ -447,7 +490,9 @@ export default function PosPage() {
                         </span>
                         <button
                           onClick={() => handleUpdateQty(item.id, 1)}
-                          className="px-2 py-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold"
+                          disabled={isMaxReached}
+                          className="px-2 py-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                          title={isMaxReached ? "Maximum stock reached" : "Increase quantity"}
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -553,11 +598,10 @@ export default function PosPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("cash")}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${
-                    paymentMethod === "cash"
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${paymentMethod === "cash"
                       ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
                       : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
+                    }`}
                 >
                   <Banknote className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   <span>Cash</span>
@@ -566,11 +610,10 @@ export default function PosPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("telebirr")}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${
-                    paymentMethod === "telebirr"
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${paymentMethod === "telebirr"
                       ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
                       : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
+                    }`}
                 >
                   <Smartphone className="h-5 w-5 text-sky-600 dark:text-sky-400" />
                   <span>Telebirr</span>
@@ -579,11 +622,10 @@ export default function PosPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("card")}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${
-                    paymentMethod === "card"
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${paymentMethod === "card"
                       ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
                       : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
+                    }`}
                 >
                   <CreditCard className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   <span>Card</span>
