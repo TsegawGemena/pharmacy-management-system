@@ -307,8 +307,8 @@ export default function PosPage() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${selectedCategory === cat
-                      ? "bg-[#006699] text-white shadow-2xs"
-                      : "bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700"
+                    ? "bg-[#006699] text-white shadow-2xs"
+                    : "bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700"
                     }`}
                 >
                   {cat}
@@ -341,8 +341,8 @@ export default function PosPage() {
                       key={product.id}
                       onClick={() => !isOutOfStock && handleAddToCart(product)}
                       className={`transition-colors ${isOutOfStock
-                          ? "opacity-60 cursor-not-allowed bg-slate-50/30 dark:bg-slate-800/20"
-                          : "hover:bg-sky-50/40 dark:hover:bg-slate-800/60 cursor-pointer"
+                        ? "opacity-60 cursor-not-allowed bg-slate-50/30 dark:bg-slate-800/20"
+                        : "hover:bg-sky-50/40 dark:hover:bg-slate-800/60 cursor-pointer"
                         }`}
                     >
                       {/* Product Name */}
@@ -422,25 +422,7 @@ export default function PosPage() {
             </span>
           </div>
 
-          {/* Customer Dropdown */}
-          <div>
-            {/* <div className="relative">
-              <select
-                value={selectedCustomer}
-                onChange={(e) => setSelectedCustomer(e.target.value)}
-                className="w-full pl-8 pr-4 py-2 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-sky-500"
-              >
-                <option value="Walking Customer">Walking Customer</option>
-                <option value="Abebe Kebede">Abebe Kebede</option>
-                <option value="Tigist Alemu">Tigist Alemu</option>
-                <option value="Dr. Tadesse">Dr. Tadesse</option>
-                <option value="+ Add Customer">+ Add Customer</option>
-              </select>
-              <User className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-            </div> */}
-          </div>
 
-          {/* Cart Item Cards List */}
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
             {cart.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
@@ -599,8 +581,8 @@ export default function PosPage() {
                   type="button"
                   onClick={() => setPaymentMethod("cash")}
                   className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${paymentMethod === "cash"
-                      ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
-                      : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
+                    : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                     }`}
                 >
                   <Banknote className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -611,8 +593,8 @@ export default function PosPage() {
                   type="button"
                   onClick={() => setPaymentMethod("telebirr")}
                   className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${paymentMethod === "telebirr"
-                      ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
-                      : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
+                    : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                     }`}
                 >
                   <Smartphone className="h-5 w-5 text-sky-600 dark:text-sky-400" />
@@ -623,8 +605,8 @@ export default function PosPage() {
                   type="button"
                   onClick={() => setPaymentMethod("card")}
                   className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-xs font-semibold transition-all cursor-pointer ${paymentMethod === "card"
-                      ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
-                      : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400"
+                    : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                     }`}
                 >
                   <CreditCard className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
