@@ -63,7 +63,7 @@ export default function LoginPage() {
 
         {/* Top Brand Header */}
         <div className="relative z-10 flex items-center gap-3.5">
-          <div className="h-11 w-11 rounded-xl bg-white p-1 shadow-lg border border-white/30 flex items-center justify-center shrink-0">
+          <div className="h-21 w-21 rounded-xl bg-white p-1 shadow-lg border border-white/30 flex items-center justify-center shrink-0">
             <img
               src="/logo.jpg"
               alt="Gammo Pharmacy Logo"
