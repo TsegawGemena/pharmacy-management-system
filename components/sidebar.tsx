@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Pill,
@@ -14,6 +14,8 @@ import {
   X,
   LogOut,
 } from "lucide-react";
+import { getStoredUser, logout, logoutApi } from "@/lib/api";
+import type { User } from "@/lib/types";
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -22,6 +24,12 @@ interface SidebarProps {
 
 export default function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setUser(getStoredUser());
+  }, [pathname]);
 
   const navigationItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -32,6 +40,16 @@ export default function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
     { name: "Reports", href: "/reports", icon: BarChart3 },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // Clear local session even if API logout fails
+    }
+    logout();
+    router.push("/login");
+  };
 
   const sidebarContent = (
     <div className="flex h-full flex-col justify-between bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors">
@@ -108,25 +126,28 @@ export default function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
           >
             <div className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-300 dark:border-slate-700 shrink-0">
               <img
-                src="/pharmacist-avatar.png"
-                alt="Abebe Kebede Pharmacist"
+                src={user?.avatarUrl || "/pharmacist-avatar.png"}
+                alt={user?.name || "User"}
                 className="h-full w-full object-cover"
               />
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                Abebe Kebede
+                {user?.name || "Staff User"}
               </p>
-              <p className="truncate text-[10.5px] text-slate-400 dark:text-slate-500">Pharmacist</p>
+              <p className="truncate text-[10.5px] text-slate-400 dark:text-slate-500">
+                {user?.role || "Staff"}
+              </p>
             </div>
           </Link>
-          <Link
-            href="/login"
+          <button
+            type="button"
+            onClick={handleLogout}
             title="Sign Out"
             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
           >
             <LogOut className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
       </div>
     </div>

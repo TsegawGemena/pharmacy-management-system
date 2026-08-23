@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   User,
   Shield,
@@ -19,13 +19,77 @@ import {
   Edit3,
   Image as ImageIcon,
   RotateCcw,
-  Check,
-  FileBadge,
+  Loader2,
   SlidersHorizontal,
   ChevronRight,
   TrendingUp,
 } from "lucide-react";
 import EditProfileModal from "@/components/settings/edit-profile-modal";
+import {
+  clockInApi,
+  clockOutApi,
+  getActivity,
+  getAttendance,
+  getMeApi,
+  getOrganization,
+  getUserProfileApi,
+  updateUserProfileApi,
+} from "@/lib/api";
+import { useApi, useMutation } from "@/lib/hooks/use-api";
+import type { User as ApiUser } from "@/lib/types";
+import type { ActivityRecord, AttendanceRecord } from "@/lib/api/attendance";
+import type { OrganizationProfile } from "@/lib/api/settings";
+
+async function loadProfile(): Promise<ApiUser> {
+  try {
+    return await getUserProfileApi();
+  } catch {
+    return getMeApi();
+  }
+}
+
+function formatDisplayDate(dateStr?: string): string {
+  if (!dateStr) return "—";
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return dateStr;
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTime(timeStr?: string): string {
+  if (!timeStr) return "—";
+  const parsed = new Date(timeStr);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+  return timeStr;
+}
+
+function formatHours(hours?: number): string {
+  if (hours == null) return "—";
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return `${h}h ${m}m`;
+}
+
+function mapUserToProfile(user: ApiUser) {
+  return {
+    fullName: user.name,
+    employeeId: user.employeeId,
+    role: user.role,
+    status: user.status || "—",
+    phone: user.phone || "",
+    email: user.email || "",
+    dateJoined: formatDisplayDate(user.dateJoined),
+    avatar: user.avatarUrl || "/pharmacist-avatar.png",
+  };
+}
 
 export default function SettingsAndProfilePage() {
   const [activeTab, setActiveTab] = useState<
@@ -35,22 +99,63 @@ export default function SettingsAndProfilePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Profile Information
-  const [profile, setProfile] = useState({
-    fullName: "Abebe Kebede",
-    employeeId: "EMP-2841",
-    role: "Pharmacist",
-    status: "Active",
-    phone: "+251 911 123456",
-    email: "abebe.k@gammopharmacy.com",
-    dateJoined: "Sep 12, 2023",
-    avatar: "/pharmacist-avatar.png",
-  });
+  const { data: profileUser, loading: profileLoading, setData: setProfileUser } = useApi(
+    () => loadProfile(),
+    []
+  );
+  const { data: attendanceRecords, loading: attendanceLoading, refetch: refetchAttendance } =
+    useApi(() => getAttendance(), []);
+  const { data: activityRecords, loading: activityLoading } = useApi(
+    () => getActivity(),
+    []
+  );
+  const { data: organization, loading: orgLoading } = useApi(
+    () => getOrganization(),
+    []
+  );
 
-  // Shift & Clock state
-  const [isClockedIn, setIsClockedIn] = useState(true);
-  const [shiftHours, setShiftHours] = useState(6.5);
+  const { mutate: updateProfile, loading: savingProfile } = useMutation(
+    updateUserProfileApi
+  );
+  const { mutate: clockIn, loading: clockingIn } = useMutation(clockInApi);
+  const { mutate: clockOut, loading: clockingOut } = useMutation(clockOutApi);
+
+  const profile = useMemo(
+    () =>
+      profileUser
+        ? mapUserToProfile(profileUser)
+        : {
+            fullName: "",
+            employeeId: "",
+            role: "",
+            status: "—",
+            phone: "",
+            email: "",
+            dateJoined: "—",
+            avatar: "/pharmacist-avatar.png",
+          },
+    [profileUser]
+  );
+
+  const attendance = attendanceRecords ?? [];
+  const activities = activityRecords ?? [];
+  const org: OrganizationProfile = organization ?? {};
+
+  const [isClockedIn, setIsClockedIn] = useState(false);
+  const [shiftHours, setShiftHours] = useState(0);
   const [currentTime, setCurrentTime] = useState("07:08:34");
+
+  useEffect(() => {
+    if (attendance.length === 0) return;
+    const today = new Date().toISOString().split("T")[0];
+    const todayRecord = attendance.find(
+      (r) => r.date?.startsWith(today) || r.date === today
+    );
+    if (todayRecord) {
+      setIsClockedIn(Boolean(todayRecord.clockIn && !todayRecord.clockOut));
+      setShiftHours(todayRecord.hours ?? 0);
+    }
+  }, [attendance]);
 
   // Running digital clock
   useEffect(() => {
@@ -66,25 +171,88 @@ export default function SettingsAndProfilePage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleProfileSave = (data: { fullName: string; phone: string; email: string }) => {
-    setProfile((prev) => ({
-      ...prev,
+  const handleProfileSave = async (data: {
+    fullName: string;
+    phone: string;
+    email: string;
+  }) => {
+    const updated = await updateProfile({
       fullName: data.fullName,
       phone: data.phone,
       email: data.email,
-    }));
-    showToast("Profile details updated successfully!");
-  };
-
-  const handleClockToggle = () => {
-    if (isClockedIn) {
-      setIsClockedIn(false);
-      showToast("Clocked out successfully for today's shift.");
+    });
+    if (updated) {
+      setProfileUser(updated);
+      showToast("Profile details updated successfully!");
     } else {
-      setIsClockedIn(true);
-      showToast("Clocked in! Shift timer active.");
+      showToast("Failed to update profile");
     }
   };
+
+  const handleClockToggle = async () => {
+    if (clockingIn || clockingOut) return;
+    if (isClockedIn) {
+      const result = await clockOut();
+      if (result) {
+        setIsClockedIn(false);
+        showToast(result.message || "Clocked out successfully for today's shift.");
+        refetchAttendance();
+      } else {
+        showToast("Failed to clock out");
+      }
+    } else {
+      const result = await clockIn();
+      if (result) {
+        setIsClockedIn(true);
+        showToast(result.message || "Clocked in! Shift timer active.");
+        refetchAttendance();
+      } else {
+        showToast("Failed to clock in");
+      }
+    }
+  };
+
+  const recentActivities = activities.slice(0, 3);
+  const securityActivities = activities.slice(0, 3);
+  const isAdmin = profile.role?.toLowerCase() === "admin";
+
+  const weeklyHours = useMemo(() => {
+    const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (6 - index));
+      const dateKey = date.toISOString().split("T")[0];
+      const record = attendance.find((r) => r.date?.startsWith(dateKey));
+      const hours = record?.hours ?? 0;
+      const maxHours = 8;
+      return {
+        day: dayLabels[date.getDay()],
+        h: hours > 0 ? `${Math.min(100, Math.round((hours / maxHours) * 100))}%` : "0%",
+        active: dateKey === today.toISOString().split("T")[0] && isClockedIn,
+      };
+    });
+  }, [attendance, isClockedIn]);
+
+  const attendanceStats = useMemo(() => {
+    const today = attendance.find((r) => {
+      const d = r.date ? new Date(r.date) : null;
+      if (!d || Number.isNaN(d.getTime())) return false;
+      const now = new Date();
+      return (
+        d.getDate() === now.getDate() &&
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear()
+      );
+    });
+    const weekTotal = attendance.slice(0, 7).reduce((sum, r) => sum + (r.hours ?? 0), 0);
+    const monthTotal = attendance.reduce((sum, r) => sum + (r.hours ?? 0), 0);
+    return {
+      today: today?.hours ?? 0,
+      week: weekTotal,
+      month: monthTotal,
+    };
+  }, [attendance]);
 
   return (
     <div className="space-y-6 max-w-6xl pb-10">
@@ -113,11 +281,11 @@ export default function SettingsAndProfilePage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-                  {profile.fullName}
+                  {profileLoading ? "Loading..." : profile.fullName || "—"}
                 </h2>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Active
+                  {profile.status}
                 </span>
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -255,10 +423,10 @@ export default function SettingsAndProfilePage() {
 
                 <div className="text-center space-y-0.5">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Clocked in at <strong className="text-slate-800 dark:text-slate-200">08:30 AM</strong>
+                    {isClockedIn ? "Currently on duty" : "Not clocked in"}
                   </p>
                   <p className="text-xs font-bold text-[#006699] dark:text-sky-400 uppercase tracking-wider">
-                    STATUS: ON DUTY
+                    STATUS: {isClockedIn ? "ON DUTY" : "OFF DUTY"}
                   </p>
                 </div>
               </div>
@@ -267,10 +435,17 @@ export default function SettingsAndProfilePage() {
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleClockToggle}
-                  className="flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-100 transition-colors"
+                  disabled={clockingIn || clockingOut}
+                  className="flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-100 transition-colors disabled:opacity-50"
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  <span>Clock Out</span>
+                  <span>
+                    {clockingIn || clockingOut
+                      ? "Processing..."
+                      : isClockedIn
+                        ? "Clock Out"
+                        : "Clock In"}
+                  </span>
                 </button>
 
                 <button
@@ -299,50 +474,33 @@ export default function SettingsAndProfilePage() {
               </div>
 
               <div className="space-y-4 pt-1">
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-sky-50 dark:bg-sky-950 text-[#006699] dark:text-sky-400 rounded-lg shrink-0 mt-0.5">
-                    <CheckCircle2 className="h-4 w-4" />
+                {activityLoading && (
+                  <div className="text-xs text-slate-400 flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading activity...
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                      Completed Sale
+                )}
+                {!activityLoading && recentActivities.length === 0 && (
+                  <div className="text-xs text-slate-400">No recent activity</div>
+                )}
+                {recentActivities.map((item, idx) => (
+                  <div key={item.id ?? idx} className="flex items-start gap-3">
+                    <div className="p-1.5 bg-sky-50 dark:bg-sky-950 text-[#006699] dark:text-sky-400 rounded-lg shrink-0 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Processed transaction <span className="font-mono font-semibold text-sky-600 dark:text-sky-400">#INV-2045</span>
-                    </p>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">10 mins ago</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 rounded-lg shrink-0 mt-0.5">
-                    <Calendar className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                      Updated Inventory
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                        {item.action || "Activity"}
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {item.details || "—"}
+                      </p>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                        {item.timestamp ? formatDisplayDate(item.timestamp) : "—"}
+                      </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Adjusted stock levels for Paracetamol 500mg
-                    </p>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">45 mins ago</span>
                   </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg shrink-0 mt-0.5">
-                    <Laptop className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                      System Login
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Logged in from workstation WS-04
-                    </p>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Today, 08:30 AM</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -375,14 +533,22 @@ export default function SettingsAndProfilePage() {
                 <CheckCircle2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/20 opacity-70">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">System Configuration</span>
-                <XCircle className="h-4 w-4 text-slate-400" />
+              <div className={`flex items-center justify-between p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 ${isAdmin ? "bg-slate-50/50 dark:bg-slate-800/40" : "bg-slate-50/30 dark:bg-slate-800/20 opacity-70"}`}>
+                <span className={`text-xs font-semibold ${isAdmin ? "text-slate-700 dark:text-slate-200" : "text-slate-500 dark:text-slate-400"}`}>System Configuration</span>
+                {isAdmin ? (
+                  <CheckCircle2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-slate-400" />
+                )}
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/20 opacity-70">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">User Management</span>
-                <XCircle className="h-4 w-4 text-slate-400" />
+              <div className={`flex items-center justify-between p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 ${isAdmin ? "bg-slate-50/50 dark:bg-slate-800/40" : "bg-slate-50/30 dark:bg-slate-800/20 opacity-70"}`}>
+                <span className={`text-xs font-medium ${isAdmin ? "text-slate-700 dark:text-slate-200" : "text-slate-500 dark:text-slate-400"}`}>User Management</span>
+                {isAdmin ? (
+                  <CheckCircle2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-slate-400" />
+                )}
               </div>
             </div>
 
@@ -420,17 +586,19 @@ export default function SettingsAndProfilePage() {
               </div>
 
               <button
-                onClick={() => showToast("Clocked in")}
-                className="px-4 py-2 bg-[#006699] hover:bg-[#005580] text-white text-xs sm:text-sm font-semibold rounded-xl transition-colors shadow-xs"
+                onClick={handleClockToggle}
+                disabled={clockingIn || clockingOut || isClockedIn}
+                className="px-4 py-2 bg-[#006699] hover:bg-[#005580] text-white text-xs sm:text-sm font-semibold rounded-xl transition-colors shadow-xs disabled:opacity-50"
               >
-                Clock In
+                {clockingIn ? "Clocking in..." : "Clock In"}
               </button>
 
               <button
-                onClick={() => showToast("Clocked out")}
-                className="px-4 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold rounded-xl transition-colors"
+                onClick={handleClockToggle}
+                disabled={clockingIn || clockingOut || !isClockedIn}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold rounded-xl transition-colors disabled:opacity-50"
               >
-                Clock Out
+                {clockingOut ? "Clocking out..." : "Clock Out"}
               </button>
             </div>
           </div>
@@ -443,7 +611,7 @@ export default function SettingsAndProfilePage() {
                 <Clock className="h-4 w-4 text-sky-600 dark:text-sky-400" />
               </div>
               <div className="text-2xl lg:text-[28px] font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-                8h 0m
+                {attendanceLoading ? "—" : formatHours(attendanceStats.today)}
               </div>
             </div>
 
@@ -453,7 +621,7 @@ export default function SettingsAndProfilePage() {
                 <Calendar className="h-4 w-4 text-teal-600 dark:text-teal-400" />
               </div>
               <div className="text-2xl lg:text-[28px] font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-                42h 30m
+                {attendanceLoading ? "—" : formatHours(attendanceStats.week)}
               </div>
             </div>
 
@@ -463,17 +631,17 @@ export default function SettingsAndProfilePage() {
                 <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="text-2xl lg:text-[28px] font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-                168h 0m
+                {attendanceLoading ? "—" : formatHours(attendanceStats.month)}
               </div>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                <span>OVERTIME (MO)</span>
+                <span>RECORDS</span>
                 <RotateCcw className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               </div>
               <div className="text-2xl lg:text-[28px] font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-                4h 15m
+                {attendanceLoading ? "—" : attendance.length}
               </div>
             </div>
           </div>
@@ -512,91 +680,47 @@ export default function SettingsAndProfilePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
-                        Oct 24, 2023
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        08:00 AM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        05:00 PM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-100">
-                        8h 0m
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">-</td>
-                      <td className="py-3.5 px-5 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
-                          Present
-                        </span>
-                      </td>
-                    </tr>
-
-                    <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
-                        Oct 23, 2023
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        08:15 AM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        06:30 PM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-100">
-                        9h 15m
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-rose-600 dark:text-rose-400">
-                        1h 15m
-                      </td>
-                      <td className="py-3.5 px-5 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                          Late
-                        </span>
-                      </td>
-                    </tr>
-
-                    <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
-                        Oct 20, 2023
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        07:55 AM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        05:05 PM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-100">
-                        8h 10m
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">-</td>
-                      <td className="py-3.5 px-5 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
-                          Present
-                        </span>
-                      </td>
-                    </tr>
-
-                    <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
-                        Oct 19, 2023
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        08:00 AM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
-                        05:00 PM
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-100">
-                        8h 0m
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">-</td>
-                      <td className="py-3.5 px-5 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
-                          Present
-                        </span>
-                      </td>
-                    </tr>
+                    {attendanceLoading && (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
+                          <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+                          Loading attendance...
+                        </td>
+                      </tr>
+                    )}
+                    {!attendanceLoading && attendance.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
+                          No attendance records found.
+                        </td>
+                      </tr>
+                    )}
+                    {!attendanceLoading &&
+                      attendance.map((record: AttendanceRecord, idx) => (
+                        <tr
+                          key={record.id ?? idx}
+                          className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+                        >
+                          <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
+                            {formatDisplayDate(record.date)}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
+                            {formatTime(record.clockIn)}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
+                            {formatTime(record.clockOut)}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-100">
+                            {formatHours(record.hours)}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-slate-400">—</td>
+                          <td className="py-3.5 px-5 text-center">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                              {record.status || "Present"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -610,15 +734,7 @@ export default function SettingsAndProfilePage() {
                   Hours - Last 7 Days
                 </h4>
                 <div className="h-36 flex items-end justify-between gap-2 pt-2 px-2">
-                  {[
-                    { day: "W", h: "75%", active: false },
-                    { day: "T", h: "85%", active: false },
-                    { day: "F", h: "95%", active: true },
-                    { day: "S", h: "0%", active: false },
-                    { day: "S", h: "0%", active: false },
-                    { day: "M", h: "80%", active: false },
-                    { day: "T", h: "45%", active: false },
-                  ].map((bar, i) => (
+                  {weeklyHours.map((bar, i) => (
                     <div key={i} className="flex flex-col items-center gap-2 flex-1">
                       <div className="w-full bg-slate-100 dark:bg-slate-800 h-28 rounded-lg flex items-end justify-center p-0.5">
                         <div
@@ -646,15 +762,21 @@ export default function SettingsAndProfilePage() {
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-slate-500 dark:text-slate-400">Shift Pattern</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">Standard Day</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {String(org.shiftPattern ?? "—")}
+                    </span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-slate-500 dark:text-slate-400">Expected Hours</span>
-                    <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">08:00 - 17:00</span>
+                    <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                      {String(org.expectedHours ?? "—")}
+                    </span>
                   </div>
                   <div className="flex justify-between py-1">
                     <span className="text-slate-500 dark:text-slate-400">Break Entitlement</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">60 mins (Unpaid)</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {String(org.breakEntitlement ?? "—")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -685,7 +807,7 @@ export default function SettingsAndProfilePage() {
                       Password
                     </h5>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Last changed 3 months ago
+                      Last changed: —
                     </p>
                   </div>
                   <button
@@ -704,8 +826,8 @@ export default function SettingsAndProfilePage() {
                       <h5 className="text-sm font-bold text-slate-800 dark:text-slate-100">
                         Two-Factor Authentication (2FA)
                       </h5>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                        ENABLED
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        —
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -738,7 +860,6 @@ export default function SettingsAndProfilePage() {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Session 1: Windows Desktop */}
                   <div className="p-4 rounded-xl border border-sky-100 dark:border-sky-950 bg-sky-50/50 dark:bg-sky-950/20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-sky-100 dark:bg-sky-900 text-[#006699] dark:text-sky-300 rounded-xl">
@@ -747,31 +868,14 @@ export default function SettingsAndProfilePage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                            Windows Desktop
+                            Current Session
                           </span>
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300">
                             THIS DEVICE
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          Addis Ababa, ET • <span className="font-mono">197.156.12.4</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Session 2: iPhone 13 */}
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
-                        <Smartphone className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                          iPhone 13
-                        </span>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          Addis Ababa, ET • Logged in 2 hours ago
+                          {profile.fullName || "Signed in user"}
                         </div>
                       </div>
                     </div>
@@ -790,38 +894,29 @@ export default function SettingsAndProfilePage() {
               </div>
 
               <div className="space-y-4 relative pl-4 before:absolute before:left-1 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
-                <div className="relative">
-                  <div className="absolute -left-5 top-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-900" />
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                    Successful Login
+                {activityLoading && (
+                  <div className="text-xs text-slate-400 flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading activity...
                   </div>
-                  <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    197.156.12.4
-                  </p>
-                  <span className="text-[10px] text-slate-400">Today, 08:30 AM</span>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute -left-5 top-0.5 h-3 w-3 rounded-full bg-sky-500 ring-4 ring-white dark:ring-slate-900" />
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                    Password Changed
+                )}
+                {!activityLoading && securityActivities.length === 0 && (
+                  <div className="text-xs text-slate-400">No recent security activity</div>
+                )}
+                {securityActivities.map((item, idx) => (
+                  <div key={item.id ?? idx} className="relative">
+                    <div className="absolute -left-5 top-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-900" />
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                      {item.action || "Activity"}
+                    </div>
+                    <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      {item.details || "—"}
+                    </p>
+                    <span className="text-[10px] text-slate-400">
+                      {item.timestamp ? formatDisplayDate(item.timestamp) : "—"}
+                    </span>
                   </div>
-                  <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    10.0.0.45
-                  </p>
-                  <span className="text-[10px] text-slate-400">Oct 12, 2023</span>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute -left-5 top-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-900" />
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                    Successful Login
-                  </div>
-                  <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    197.156.12.4
-                  </p>
-                  <span className="text-[10px] text-slate-400">Oct 10, 2023</span>
-                </div>
+                ))}
               </div>
 
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-center">
@@ -855,56 +950,34 @@ export default function SettingsAndProfilePage() {
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-            {[
-              {
-                action: "Dispensed Prescription",
-                target: "Amoxicillin 500mg (2 Boxes) to Abebe Kebede",
-                time: "Today, 11:45 AM",
-                icon: CheckCircle2,
-                color: "text-emerald-600",
-              },
-              {
-                action: "Completed Sale",
-                target: "Processed transaction #INV-2045 (327.75 ETB)",
-                time: "Today, 11:20 AM",
-                icon: CheckCircle2,
-                color: "text-sky-600",
-              },
-              {
-                action: "Stock Count Verification",
-                target: "Verified 145 units of Amoxicillin 500mg",
-                time: "Today, 10:15 AM",
-                icon: Calendar,
-                color: "text-teal-600",
-              },
-              {
-                action: "System Login",
-                target: "Logged in from workstation WS-04",
-                time: "Today, 08:30 AM",
-                icon: Laptop,
-                color: "text-indigo-600",
-              },
-            ].map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div key={idx} className="py-3.5 flex items-center justify-between gap-3">
+            {activityLoading && (
+              <div className="py-8 text-center text-slate-400 flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading activity...
+              </div>
+            )}
+            {!activityLoading && activities.length === 0 && (
+              <div className="py-8 text-center text-slate-400">No activity records found.</div>
+            )}
+            {!activityLoading &&
+              activities.map((item, idx) => (
+                <div key={item.id ?? idx} className="py-3.5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <Icon className={`h-4 w-4 ${item.color} shrink-0`} />
+                    <CheckCircle2 className="h-4 w-4 text-sky-600 shrink-0" />
                     <div>
                       <span className="font-bold text-slate-800 dark:text-slate-100">
-                        {item.action}
+                        {item.action || "Activity"}
                       </span>
                       <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
-                        {item.target}
+                        {item.details || "—"}
                       </p>
                     </div>
                   </div>
                   <span className="text-[11px] text-slate-400 font-mono shrink-0">
-                    {item.time}
+                    {item.timestamp ? formatDisplayDate(item.timestamp) : "—"}
                   </span>
                 </div>
-              );
-            })}
+              ))}
           </div>
         </div>
       )}
@@ -919,27 +992,33 @@ export default function SettingsAndProfilePage() {
             <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-6">
               <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl bg-white p-2 shrink-0 shadow-lg border border-white/20 flex items-center justify-center">
                 <img
-                  src="/logo.jpg"
-                  alt="Gamo Development Association Logo"
+                  src={org.logoUrl || "/logo.jpg"}
+                  alt="Organization Logo"
                   className="h-full w-full object-contain"
                 />
               </div>
 
               <div className="space-y-2 text-center sm:text-left flex-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 text-sky-200 backdrop-blur-xs border border-white/10">
-                  <span>GAAMMO DICHCHA ISSIPETETHTHA</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                  Gamo Development Association (ጋሞ ልማት ማህበር)
-                </h3>
-                <p className="text-sm font-medium text-sky-100/90">
-                  Gammo Pharmacy - Clinical Operations & Management
-                </p>
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-300 pt-1">
-                  <span>Addis Ababa & Arba Minch, Ethiopia</span>
-                  <span>EFDA License: EFDA/PH-2024/0981</span>
-                  <span>TIN: 0049281726</span>
-                </div>
+                {orgLoading ? (
+                  <div className="text-sm text-sky-200 flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading organization...
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                      {org.name || "—"}
+                    </h3>
+                    <p className="text-sm font-medium text-sky-100/90">
+                      Gammo Pharmacy - Clinical Operations & Management
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-300 pt-1">
+                      {org.address && <span>{org.address}</span>}
+                      {org.phone && <span>{org.phone}</span>}
+                      {org.email && <span>{org.email}</span>}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

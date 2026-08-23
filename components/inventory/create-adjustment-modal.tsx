@@ -1,12 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Plus, AlertCircle, RefreshCw } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, Plus, RefreshCw } from "lucide-react";
+import { getStoredUser } from "@/lib/api";
+
+const EMPTY_FORM = {
+  productName: "",
+  sku: "",
+  type: "Expired",
+  qtyChange: -1,
+  adjustedBy: "",
+  reason: "",
+  status: "Completed",
+};
 
 interface CreateAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddAdjustment: (adj: any) => void;
+  onAddAdjustment: (adj: Record<string, unknown>) => void;
 }
 
 export default function CreateAdjustmentModal({
@@ -14,27 +25,24 @@ export default function CreateAdjustmentModal({
   onClose,
   onAddAdjustment,
 }: CreateAdjustmentModalProps) {
-  const [formData, setFormData] = useState({
-    productName: "Amoxicillin 500mg Capsules",
-    sku: "AMX-500-CP",
-    type: "Expired", // Expired, Inventory Count, Damaged, Theft / Lost, Return
-    qtyChange: -5,
-    adjustedBy: "Dr. Tadesse",
-    reason: "Damaged packaging during shelf relocation.",
-    status: "Completed",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
+
+  useEffect(() => {
+    if (isOpen) {
+      const user = getStoredUser();
+      setFormData({
+        ...EMPTY_FORM,
+        adjustedBy: user?.name ?? "",
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAddAdjustment({
-      id: `#ADJ-${Math.floor(100 + Math.random() * 900)}`,
-      date: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
+      date: new Date().toISOString().split("T")[0],
       productName: formData.productName,
       sku: formData.sku,
       type: formData.type,
@@ -106,7 +114,7 @@ export default function CreateAdjustmentModal({
                   setFormData({
                     ...formData,
                     type: newType,
-                    qtyChange: newType === "Inventory Count" ? 10 : -Math.abs(formData.qtyChange),
+                    qtyChange: newType === "Inventory Count" ? 1 : -Math.abs(formData.qtyChange || 1),
                   });
                 }}
                 className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-hidden focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
@@ -176,7 +184,6 @@ export default function CreateAdjustmentModal({
             />
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Pill,
   Network,
@@ -8,110 +8,15 @@ import {
   Ban,
   Plus,
   Search,
-  ChevronLeft,
-  ChevronRight,
-  MoreVertical,
   CheckCircle2,
-  Package,
 } from "lucide-react";
 import AddProductModal from "@/components/inventory/add-product-modal";
-
-interface ProductCatalogItem {
-  id: string;
-  name: string;
-  category: string;
-  sku: string;
-  manufacturer: string;
-  price: string;
-  stock: number;
-  status: "Active" | "Inactive";
-}
-
-const INITIAL_PRODUCTS: ProductCatalogItem[] = [
-  {
-    id: "1",
-    name: "Amoxicillin 500mg Caps",
-    category: "Antibiotics",
-    sku: "AMX-001",
-    manufacturer: "GSK",
-    price: "120.00",
-    stock: 145,
-    status: "Active",
-  },
-  {
-    id: "2",
-    name: "Paracetamol 500mg Tabs",
-    category: "Analgesics",
-    sku: "PCM-022",
-    manufacturer: "Local",
-    price: "45.00",
-    stock: 320,
-    status: "Active",
-  },
-  {
-    id: "3",
-    name: "Ibuprofen 400mg Tabs",
-    category: "NSAID",
-    sku: "IBU-105",
-    manufacturer: "Pfizer",
-    price: "65.50",
-    stock: 12,
-    status: "Active",
-  },
-  {
-    id: "4",
-    name: "Vitamin C 1000mg",
-    category: "Supplements",
-    sku: "VIT-99",
-    manufacturer: "Local",
-    price: "210.00",
-    stock: 0,
-    status: "Inactive",
-  },
-  {
-    id: "5",
-    name: "Omeprazole 20mg Caps",
-    category: "Gastrointestinal",
-    sku: "OMP-020",
-    manufacturer: "AstraZeneca",
-    price: "180.00",
-    stock: 89,
-    status: "Active",
-  },
-  {
-    id: "6",
-    name: "Ceftriaxone 1g Inj",
-    category: "Antibiotics",
-    sku: "CEF-100",
-    manufacturer: "Roche",
-    price: "250.00",
-    stock: 34,
-    status: "Active",
-  },
-  {
-    id: "7",
-    name: "Metformin 500mg Tabs",
-    category: "Antidiabetic",
-    sku: "MET-500",
-    manufacturer: "Sanofi",
-    price: "35.00",
-    stock: 220,
-    status: "Active",
-  },
-  {
-    id: "8",
-    name: "Azithromycin 500mg",
-    category: "Antibiotics",
-    sku: "AZI-500",
-    manufacturer: "Pfizer",
-    price: "450.00",
-    stock: 65,
-    status: "Active",
-  },
-];
+import { PageState } from "@/components/ui/page-state";
+import { getProducts, createProduct } from "@/lib/api";
+import type { Product } from "@/lib/types";
+import { useApi } from "@/lib/hooks/use-api";
 
 export default function ProductManagementPage() {
-  const [products, setProducts] = useState<ProductCatalogItem[]>(INITIAL_PRODUCTS);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
@@ -119,45 +24,50 @@ export default function ProductManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const { data, loading, error, refetch } = useApi(
+    () => getProducts({ q: searchQuery, category: categoryFilter, status: statusFilter, page: currentPage }),
+    [searchQuery, categoryFilter, statusFilter, currentPage]
+  );
+
+  const products = data?.data ?? [];
+  const totalEntries = data?.meta?.total ?? products.length;
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleAddProduct = (newProd: any) => {
-    const item: ProductCatalogItem = {
-      id: String(Date.now()),
-      name: newProd.name,
-      category: newProd.category,
-      sku: newProd.batchNo || `SKU-${Math.floor(100 + Math.random() * 900)}`,
-      manufacturer: "GSK",
-      price: Number(newProd.unitPrice).toFixed(2),
-      stock: newProd.stock,
-      status: "Active",
-    };
-    setProducts((prev) => [item, ...prev]);
-    showToast(`Added ${newProd.name} to catalog`);
+  const handleAddProduct = async (newProd: {
+    name: string;
+    category: string;
+    batchNo?: string;
+    stock: number;
+    unitPrice: number | string;
+  }) => {
+    try {
+      await createProduct({
+        name: newProd.name,
+        category: newProd.category,
+        sku: newProd.batchNo || undefined,
+        manufacturer: "",
+        price: Number(newProd.unitPrice).toFixed(2),
+        stock: newProd.stock,
+        status: "Active",
+      });
+      await refetch();
+      showToast(`Added ${newProd.name} to catalog`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to add product");
+    }
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((item) => {
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchName = item.name.toLowerCase().includes(q);
-        const matchSku = item.sku.toLowerCase().includes(q);
-        const matchCat = item.category.toLowerCase().includes(q);
-        if (!matchName && !matchSku && !matchCat) return false;
-      }
-      if (categoryFilter !== "All Categories" && item.category !== categoryFilter) {
-        return false;
-      }
-      if (statusFilter === "Active" && item.status !== "Active") return false;
-      if (statusFilter === "Inactive" && item.status !== "Inactive") return false;
-      if (statusFilter === "Out of Stock" && item.stock > 0) return false;
-      if (statusFilter === "Low Stock" && (item.stock > 20 || item.stock === 0)) return false;
-      return true;
-    });
-  }, [products, searchQuery, categoryFilter, statusFilter]);
+  const stats = useMemo(() => {
+    const activeCount = products.filter((p) => p.status === "Active").length;
+    const categories = new Set(products.map((p) => p.category));
+    const outOfStock = products.filter((p) => p.stock === 0).length;
+    const discontinued = products.filter((p) => p.status === "Inactive").length;
+    return { activeCount, categoryCount: categories.size, outOfStock, discontinued, categories };
+  }, [products]);
 
   return (
     <div className="space-y-6">
@@ -202,10 +112,10 @@ export default function ProductManagementPage() {
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-            1,248
+            {totalEntries.toLocaleString()}
           </div>
           <div className="text-xs text-sky-600 dark:text-sky-400 font-semibold mt-1">
-            1,196 Active
+            {stats.activeCount.toLocaleString()} Active
           </div>
         </div>
 
@@ -220,10 +130,12 @@ export default function ProductManagementPage() {
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-            14
+            {stats.categoryCount}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 truncate">
-            Medicine, Surgical, Wellness...
+            {stats.categories.size > 0
+              ? [...stats.categories].slice(0, 3).join(", ") + (stats.categories.size > 3 ? "..." : "")
+              : "No categories yet"}
           </div>
         </div>
 
@@ -238,7 +150,7 @@ export default function ProductManagementPage() {
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-            12
+            {stats.outOfStock}
           </div>
           <div className="text-xs text-rose-600 dark:text-rose-400 font-semibold mt-1">
             Needs replenishment
@@ -256,7 +168,7 @@ export default function ProductManagementPage() {
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-2">
-            5
+            {stats.discontinued}
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1">
             Inactive items
@@ -309,28 +221,29 @@ export default function ProductManagementPage() {
         </div>
 
         {/* Products Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-[13px]">
-            <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <tr>
-                <th className="py-3.5 px-6">Name</th>
-                <th className="py-3.5 px-6">Category</th>
-                <th className="py-3.5 px-5 font-mono">SKU/ID</th>
-                <th className="py-3.5 px-5">Manufacturer</th>
-                <th className="py-3.5 px-5 text-right font-mono">Price (ETB)</th>
-                <th className="py-3.5 px-6 text-center">Stock</th>
-                <th className="py-3.5 px-6">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredProducts.length === 0 ? (
+        <PageState loading={loading} error={error} onRetry={refetch}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-[13px]">
+              <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
-                    No products found matching your search.
-                  </td>
+                  <th className="py-3.5 px-6">Name</th>
+                  <th className="py-3.5 px-6">Category</th>
+                  <th className="py-3.5 px-5 font-mono">SKU/ID</th>
+                  <th className="py-3.5 px-5">Manufacturer</th>
+                  <th className="py-3.5 px-5 text-right font-mono">Price (ETB)</th>
+                  <th className="py-3.5 px-6 text-center">Stock</th>
+                  <th className="py-3.5 px-6">Status</th>
                 </tr>
-              ) : (
-                filteredProducts.map((p) => (
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
+                      No products found matching your search.
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((p: Product) => (
                   <tr key={p.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                     {/* Name */}
                     <td className="py-3.5 px-6 font-semibold text-slate-800 dark:text-slate-200">
@@ -394,10 +307,11 @@ export default function ProductManagementPage() {
             </tbody>
           </table>
         </div>
+        </PageState>
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <div>Showing 1 to {filteredProducts.length} of 1,248 entries</div>
+          <div>Showing 1 to {products.length} of {totalEntries.toLocaleString()} entries</div>
           <div className="flex items-center gap-1">
             <button
               disabled={currentPage === 1}

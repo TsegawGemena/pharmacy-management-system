@@ -1,33 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Bell, CheckCircle2, ShieldAlert } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, CheckCircle2, ShieldAlert } from "lucide-react";
+import type { AlertSettings } from "@/lib/api/settings";
 
 interface SetExpiryAlertsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (settings: any) => void;
+  initialSettings?: AlertSettings | null;
+  onSave: (settings: AlertSettings) => void;
 }
 
 export default function SetExpiryAlertsModal({
   isOpen,
   onClose,
+  initialSettings,
   onSave,
 }: SetExpiryAlertsModalProps) {
-  const [leadDays, setLeadDays] = useState(90);
-  const [criticalDays, setCriticalDays] = useState(30);
-  const [autoDiscount, setAutoDiscount] = useState(true);
-  const [emailNotification, setEmailNotification] = useState(true);
+  const [leadDays, setLeadDays] = useState(0);
+  const [criticalDays, setCriticalDays] = useState(0);
+  const [autoDiscount, setAutoDiscount] = useState(false);
+  const [emailNotification, setEmailNotification] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setLeadDays(Number(initialSettings?.daysBeforeExpiry ?? 0));
+    setCriticalDays(Number(initialSettings?.criticalDays ?? 0));
+    setAutoDiscount(Boolean(initialSettings?.autoDiscount ?? false));
+    setEmailNotification(Boolean(initialSettings?.enabled ?? false));
+  }, [isOpen, initialSettings]);
 
   if (!isOpen) return null;
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      leadDays,
+      daysBeforeExpiry: leadDays,
       criticalDays,
       autoDiscount,
-      emailNotification,
+      enabled: emailNotification,
     });
     onClose();
   };
@@ -62,7 +73,7 @@ export default function SetExpiryAlertsModal({
             </label>
             <input
               type="number"
-              min="30"
+              min="0"
               max="180"
               value={leadDays}
               onChange={(e) => setLeadDays(Number(e.target.value))}
@@ -79,7 +90,7 @@ export default function SetExpiryAlertsModal({
             </label>
             <input
               type="number"
-              min="7"
+              min="0"
               max="60"
               value={criticalDays}
               onChange={(e) => setCriticalDays(Number(e.target.value))}

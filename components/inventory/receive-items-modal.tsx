@@ -33,21 +33,21 @@ export default function ReceiveItemsModal({
 
   const [batchNumbers, setBatchNumbers] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    items.forEach((item, idx) => {
-      initial[item.sku] = `BX-2024-${8000 + idx * 115}`;
+    items.forEach((item) => {
+      initial[item.sku] = "";
     });
     return initial;
   });
 
   const [storageLocations, setStorageLocations] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    items.forEach((item, idx) => {
-      initial[item.sku] = idx === 0 ? "Shelf A-12" : "Shelf B-04";
+    items.forEach((item) => {
+      initial[item.sku] = "";
     });
     return initial;
   });
 
-  const [notes, setNotes] = useState("Shipment received in good condition. All seals intact.");
+  const [notes, setNotes] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
   if (!isOpen) return null;

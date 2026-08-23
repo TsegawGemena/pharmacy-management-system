@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -23,6 +23,10 @@ import {
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import AlertSettingsModal from "@/components/inventory/alert-settings-modal";
+import { PageState } from "@/components/ui/page-state";
+import { getInventoryAlerts, getStockAlertSettings, updateStockAlertSettings } from "@/lib/api";
+import type { InventoryItem } from "@/lib/types";
+import { useApi, useMutation } from "@/lib/hooks/use-api";
 
 interface StockAlertItem {
   id: string;
@@ -37,84 +41,31 @@ interface StockAlertItem {
   iconType: "pill" | "tablet" | "gauze" | "capsule";
 }
 
-const INITIAL_ALERTS: StockAlertItem[] = [
-  {
-    id: "1",
-    name: "Amoxicillin 500mg Capsules",
-    supplier: "PharmaCorp Inc.",
-    sku: "MED-AMX-500",
-    category: "Antibiotics",
-    status: "Critical",
-    currentStock: 2,
+function mapToStockAlert(item: InventoryItem): StockAlertItem {
+  const isCritical = item.stock <= 5 || item.stock === 0;
+  return {
+    id: item.id,
+    name: item.name,
+    supplier: "—",
+    sku: item.batchNo,
+    category: item.category,
+    status: isCritical ? "Critical" : "Low Stock",
+    currentStock: item.stock,
     unitType: "Units",
-    threshold: 20,
-    iconType: "capsule",
-  },
-  {
-    id: "2",
-    name: "Lisinopril 10mg Tablets",
-    supplier: "Global Health Supplies",
-    sku: "MED-LIS-010",
-    category: "Cardiovascular",
-    status: "Critical",
-    currentStock: 4,
-    unitType: "Units",
-    threshold: 30,
-    iconType: "tablet",
-  },
-  {
-    id: "3",
-    name: "Sterile Gauze Pads 4x4",
-    supplier: "MedEquip Direct",
-    sku: "SUP-GAZ-4X4",
-    category: "First Aid / Supplies",
-    status: "Low Stock",
-    currentStock: 15,
-    unitType: "Boxes",
-    threshold: 25,
-    iconType: "gauze",
-  },
-  {
-    id: "4",
-    name: "Ibuprofen 400mg Tablets",
-    supplier: "PharmaCorp Inc.",
-    sku: "MED-IBU-400",
-    category: "Analgesics",
-    status: "Low Stock",
-    currentStock: 45,
-    unitType: "Units",
-    threshold: 50,
+    threshold: item.minStock,
     iconType: "pill",
-  },
-  {
-    id: "5",
-    name: "Omeprazole 20mg Delayed-Release",
-    supplier: "GlaxoSmithKline (GSK)",
-    sku: "MED-OME-020",
-    category: "Gastrointestinal",
-    status: "Critical",
-    currentStock: 3,
-    unitType: "Units",
-    threshold: 25,
-    iconType: "capsule",
-  },
-  {
-    id: "6",
-    name: "Disposable Syringes 5ml",
-    supplier: "Medline Industries",
-    sku: "SUP-SYR-005",
-    category: "Medical Supplies",
-    status: "Low Stock",
-    currentStock: 60,
-    unitType: "Boxes",
-    threshold: 100,
-    iconType: "gauze",
-  },
-];
+  };
+}
 
 export default function LowStockAlertsPage() {
   const router = useRouter();
-  const [alerts, setAlerts] = useState<StockAlertItem[]>(INITIAL_ALERTS);
+  const { data, loading, error, refetch, setData } = useApi(() => getInventoryAlerts(), []);
+  const { data: stockAlertSettings, refetch: refetchAlertSettings } = useApi(
+    getStockAlertSettings,
+    []
+  );
+  const { mutate: saveAlertSettings } = useMutation(updateStockAlertSettings);
+  const alerts = useMemo(() => (data ?? []).map(mapToStockAlert), [data]);
   const [filterTab, setFilterTab] = useState<"all" | "critical" | "medications" | "supplies">("all");
   const [sortBy, setSortBy] = useState<"urgency" | "stock_asc" | "name">("urgency");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -156,15 +107,7 @@ export default function LowStockAlertsPage() {
 
   const handleRestockSingle = (item: StockAlertItem) => {
     showToast(`Initiating Purchase Order for ${item.name}`);
-    router.push(
-      `/inventory/purchase-orders/new?supplier=${encodeURIComponent(
-        item.supplier.includes("PharmaCorp")
-          ? "PharmaCorp East Africa"
-          : item.supplier.includes("GSK")
-          ? "GlaxoSmithKline (GSK)"
-          : "Medline Industries"
-      )}`
-    );
+    router.push("/inventory/purchase-orders/new");
   };
 
   const handleStartEditThreshold = (item: StockAlertItem) => {
@@ -173,8 +116,10 @@ export default function LowStockAlertsPage() {
   };
 
   const handleSaveThreshold = (id: string) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, threshold: Number(editingThresholdValue) } : a))
+    setData((prev) =>
+      (prev ?? []).map((a) =>
+        a.id === id ? { ...a, minStock: Number(editingThresholdValue) } : a
+      )
     );
     setEditingThresholdId(null);
     showToast("Updated minimum stock threshold");
@@ -200,6 +145,11 @@ export default function LowStockAlertsPage() {
         return a.name.localeCompare(b.name);
       });
   }, [alerts, filterTab, sortBy]);
+
+  const stats = useMemo(() => ({
+    critical: alerts.filter((a) => a.status === "Critical").length,
+    lowStock: alerts.filter((a) => a.status === "Low Stock").length,
+  }), [alerts]);
 
   return (
     <div className="space-y-6">
@@ -261,7 +211,7 @@ export default function LowStockAlertsPage() {
             </div>
           </div>
           <div className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-2 font-mono">
-            12
+            {stats.critical}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-rose-700 dark:text-rose-300 font-semibold mt-1">
             <AlertTriangle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
@@ -280,7 +230,7 @@ export default function LowStockAlertsPage() {
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2 font-mono">
-            34
+            {stats.lowStock}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
             <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
@@ -299,7 +249,7 @@ export default function LowStockAlertsPage() {
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2 font-mono">
-            8
+            {alerts.length}
           </div>
           <Link
             href="/inventory/purchase-orders"
@@ -353,8 +303,9 @@ export default function LowStockAlertsPage() {
         </div>
 
         {/* Alerts Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-[13px]">
+        <PageState loading={loading} error={error} onRetry={refetch}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-[13px]">
             <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-3 px-4 w-10 text-center">
@@ -511,15 +462,16 @@ export default function LowStockAlertsPage() {
             </tbody>
           </table>
         </div>
+        </PageState>
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <div>Showing 1-{filteredAlerts.length} of 46 items</div>
+          <div>Showing 1-{filteredAlerts.length} of {alerts.length} items</div>
           <div className="flex items-center gap-3">
             <button className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-40 cursor-pointer">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="font-medium text-slate-700 dark:text-slate-300">Page 1 of 12</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Page 1 of 1</span>
             <button className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer">
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -531,7 +483,16 @@ export default function LowStockAlertsPage() {
       <AlertSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onSave={() => showToast("Alert threshold settings updated successfully")}
+        initialSettings={stockAlertSettings}
+        onSave={async (settings) => {
+          const saved = await saveAlertSettings(settings);
+          if (saved) {
+            refetchAlertSettings();
+            showToast("Alert threshold settings updated successfully");
+          } else {
+            showToast("Failed to update alert settings");
+          }
+        }}
       />
     </div>
   );

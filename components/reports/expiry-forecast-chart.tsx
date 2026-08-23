@@ -1,23 +1,57 @@
 "use client";
 
-import React, { useState } from "react";
-import { MoreVertical } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Loader2, MoreVertical } from "lucide-react";
+import { unwrapData } from "@/lib/api/client";
 
-export default function ExpiryForecastChart() {
+interface MonthBar {
+  month: string;
+  value: number;
+  heightPct: number;
+}
+
+function parseForecastData(raw: unknown): MonthBar[] {
+  const payload = unwrapData<Record<string, unknown>>(raw);
+  const forecast = (payload.forecast ?? payload.months ?? payload.series) as
+    | Record<string, unknown>[]
+    | undefined;
+
+  if (!Array.isArray(forecast) || forecast.length === 0) {
+    return [];
+  }
+
+  const maxValue = Math.max(
+    ...forecast.map((item) => Number(item.value ?? item.amount ?? 0)),
+    1
+  );
+
+  return forecast.slice(0, 6).map((item, index) => {
+    const value = Number(item.value ?? item.amount ?? 0);
+    return {
+      month: String(item.month ?? item.label ?? `M${index + 1}`),
+      value,
+      heightPct: Math.max(10, Math.round((value / maxValue) * 90)),
+    };
+  });
+}
+
+interface ExpiryForecastChartProps {
+  data?: unknown;
+  loading?: boolean;
+}
+
+export default function ExpiryForecastChart({ data, loading }: ExpiryForecastChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-
-  const months = [
-    { month: "Nov", value: 4900, heightPct: 70 },
-    { month: "Dec", value: 6300, heightPct: 90 },
-    { month: "Jan", value: 3400, heightPct: 48 },
-    { month: "Feb", value: 1800, heightPct: 26 },
-    { month: "Mar", value: 4500, heightPct: 64 },
-    { month: "Apr", value: 2400, heightPct: 34 },
-  ];
+  const months = useMemo(() => parseForecastData(data ?? {}), [data]);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs space-y-4 transition-colors">
-      {/* Header */}
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs space-y-4 transition-colors relative">
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-slate-900/70 rounded-xl">
+          <Loader2 className="h-6 w-6 animate-spin text-sky-600" />
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
           6-Month Expiry Forecast (Value)
@@ -27,48 +61,35 @@ export default function ExpiryForecastChart() {
         </button>
       </div>
 
-      {/* Chart Canvas Area */}
-      <div className="relative flex items-end justify-between h-64 pt-6 pb-2 px-2">
-        {/* Y-Axis Grid Lines & Labels */}
-        <div className="absolute inset-x-0 inset-y-6 pointer-events-none flex flex-col justify-between text-[10px] font-mono text-slate-400 dark:text-slate-500">
-          {[7000, 6000, 5000, 4000, 3000, 2000, 1000, 0].map((val) => (
-            <div key={val} className="flex items-center gap-2">
-              <span className="w-9 text-right">${val}</span>
-              <div className="flex-1 border-b border-slate-100 dark:border-slate-800" />
-            </div>
-          ))}
+      {months.length === 0 && !loading ? (
+        <div className="flex items-center justify-center h-56 text-sm text-slate-400 dark:text-slate-500">
+          No forecast data available yet.
         </div>
-
-        {/* Bars Container */}
-        <div className="relative z-10 w-full pl-12 pr-4 flex items-end justify-around h-full">
-          {months.map((item, idx) => (
+      ) : (
+        <div className="relative h-56 flex items-end justify-between gap-3 px-2 pt-6">
+          {months.map((m, idx) => (
             <div
-              key={item.month}
-              className="flex flex-col items-center gap-2 h-full justify-end group cursor-pointer"
+              key={m.month}
+              className="flex-1 flex flex-col items-center gap-2 group cursor-pointer"
               onMouseEnter={() => setHoveredIdx(idx)}
               onMouseLeave={() => setHoveredIdx(null)}
             >
-              {/* Tooltip on hover */}
               {hoveredIdx === idx && (
-                <div className="absolute -top-1 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-mono py-1 px-2 rounded shadow-md pointer-events-none transition-all">
-                  ${item.value.toLocaleString()}
+                <div className="absolute -top-1 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-xs">
+                  {m.value.toLocaleString()} ETB
                 </div>
               )}
-
-              {/* Bar */}
               <div
-                className="w-10 sm:w-12 bg-[#0284c7] hover:bg-[#0369a1] dark:bg-sky-500 dark:hover:bg-sky-400 rounded-t-md transition-all duration-300 shadow-2xs"
-                style={{ height: `${item.heightPct}%` }}
+                className="w-full max-w-[48px] rounded-t-md bg-gradient-to-t from-sky-600 to-sky-400 dark:from-sky-500 dark:to-sky-300 transition-all duration-300 group-hover:opacity-90"
+                style={{ height: `${m.heightPct}%` }}
               />
-
-              {/* Month label */}
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                {item.month}
+              <span className="text-[11px] font-mono font-medium text-slate-500 dark:text-slate-400">
+                {m.month}
               </span>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }

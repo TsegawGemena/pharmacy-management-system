@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Package,
   AlertTriangle,
@@ -10,153 +10,17 @@ import {
   Search,
   Download,
   RotateCcw,
-  SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
   Filter as FilterIcon,
   CheckCircle2,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import AddProductModal from "@/components/inventory/add-product-modal";
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  batchNo: string;
-  stock: number;
-  minStock: number;
-  maxStock?: number;
-  expiryDate: string; // "Oct 2025", "Nov 2024", etc.
-  isExpiringSoon?: boolean;
-  unitPrice: string;
-}
-
-const INITIAL_ITEMS: InventoryItem[] = [
-  {
-    id: "1",
-    name: "Amoxicillin 500mg Caps",
-    category: "Antibiotics",
-    batchNo: "BX-7821",
-    stock: 450,
-    minStock: 100,
-    maxStock: 500,
-    expiryDate: "Oct 2025",
-    isExpiringSoon: false,
-    unitPrice: "245.00",
-  },
-  {
-    id: "2",
-    name: "Paracetamol 500mg Tabs",
-    category: "Pain Relief",
-    batchNo: "PT-1182",
-    stock: 85,
-    minStock: 200,
-    maxStock: 500,
-    expiryDate: "Jan 2026",
-    isExpiringSoon: false,
-    unitPrice: "45.00",
-  },
-  {
-    id: "3",
-    name: "Lisinopril 10mg Tabs",
-    category: "Cardiovascular",
-    batchNo: "LS-9941",
-    stock: 320,
-    minStock: 50,
-    maxStock: 400,
-    expiryDate: "Nov 2024",
-    isExpiringSoon: true,
-    unitPrice: "310.50",
-  },
-  {
-    id: "4",
-    name: "Vitamin C 1000mg Effervescent",
-    category: "Vitamins",
-    batchNo: "VC-0021",
-    stock: 12,
-    minStock: 100,
-    maxStock: 300,
-    expiryDate: "Dec 2025",
-    isExpiringSoon: false,
-    unitPrice: "120.00",
-  },
-  {
-    id: "5",
-    name: "Omeprazole 20mg Caps",
-    category: "Gastrointestinal",
-    batchNo: "OM-3310",
-    stock: 180,
-    minStock: 60,
-    maxStock: 250,
-    expiryDate: "Aug 2026",
-    isExpiringSoon: false,
-    unitPrice: "185.00",
-  },
-  {
-    id: "6",
-    name: "Metformin 500mg Tabs",
-    category: "Diabetes Care",
-    batchNo: "MF-5520",
-    stock: 24,
-    minStock: 150,
-    maxStock: 400,
-    expiryDate: "Dec 2024",
-    isExpiringSoon: true,
-    unitPrice: "95.00",
-  },
-  {
-    id: "7",
-    name: "Azithromycin 250mg Tabs",
-    category: "Antibiotics",
-    batchNo: "AZ-4412",
-    stock: 92,
-    minStock: 120,
-    maxStock: 250,
-    expiryDate: "Mar 2026",
-    isExpiringSoon: false,
-    unitPrice: "410.00",
-  },
-  {
-    id: "8",
-    name: "Ibuprofen 400mg Caps",
-    category: "Pain Relief",
-    batchNo: "IB-2004",
-    stock: 520,
-    minStock: 100,
-    maxStock: 600,
-    expiryDate: "May 2027",
-    isExpiringSoon: false,
-    unitPrice: "65.00",
-  },
-  {
-    id: "9",
-    name: "Atorvastatin 20mg Tabs",
-    category: "Cardiovascular",
-    batchNo: "AT-9021",
-    stock: 140,
-    minStock: 50,
-    maxStock: 200,
-    expiryDate: "Nov 2025",
-    isExpiringSoon: false,
-    unitPrice: "380.00",
-  },
-  {
-    id: "10",
-    name: "Ciprofloxacin 500mg",
-    category: "Antibiotics",
-    batchNo: "CP-1108",
-    stock: 70,
-    minStock: 80,
-    maxStock: 200,
-    expiryDate: "Jan 2025",
-    isExpiringSoon: true,
-    unitPrice: "290.00",
-  },
-];
+import { PageState } from "@/components/ui/page-state";
+import { getInventory, createInventoryItem } from "@/lib/api";
+import type { InventoryItem } from "@/lib/types";
+import { useApi } from "@/lib/hooks/use-api";
 
 export default function InventoryPage() {
-  const [items, setItems] = useState<InventoryItem[]>(INITIAL_ITEMS);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [stockStatus, setStockStatus] = useState<"all" | "in_stock" | "low_stock" | "out_of_stock">("all");
@@ -166,34 +30,53 @@ export default function InventoryPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const { data, loading, error, refetch } = useApi(() => getInventory(), []);
+  const items = data ?? [];
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
+    try {
+      await refetch();
       showToast("Inventory data refreshed");
-    }, 400);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to refresh inventory");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  const handleAddProduct = (newProd: any) => {
-    const formatted: InventoryItem = {
-      id: newProd.id,
-      name: newProd.name,
-      category: newProd.category,
-      batchNo: newProd.batchNo,
-      stock: newProd.stock,
-      minStock: newProd.minStock,
-      maxStock: Math.max(newProd.stock * 1.5, newProd.minStock * 2),
-      expiryDate: newProd.expiryDate,
-      isExpiringSoon: false,
-      unitPrice: newProd.unitPrice,
-    };
-    setItems((prev) => [formatted, ...prev]);
-    showToast(`Added "${newProd.name}" to inventory`);
+  const handleAddProduct = async (newProd: {
+    id?: string;
+    name: string;
+    category: string;
+    batchNo: string;
+    stock: number;
+    minStock: number;
+    expiryDate: string;
+    unitPrice: string;
+  }) => {
+    try {
+      await createInventoryItem({
+        name: newProd.name,
+        category: newProd.category,
+        batchNo: newProd.batchNo,
+        stock: newProd.stock,
+        minStock: newProd.minStock,
+        maxStock: Math.max(newProd.stock * 1.5, newProd.minStock * 2),
+        expiryDate: newProd.expiryDate,
+        isExpiringSoon: false,
+        unitPrice: newProd.unitPrice,
+      });
+      await refetch();
+      showToast(`Added "${newProd.name}" to inventory`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to add product");
+    }
   };
 
   const handleExportCSV = () => {
@@ -253,6 +136,13 @@ export default function InventoryPage() {
     });
   }, [items, searchQuery, categoryFilter, stockStatus, expiryStatus]);
 
+  const stats = useMemo(() => ({
+    totalSkus: items.length,
+    lowStock: items.filter((i) => i.stock <= i.minStock && i.stock > 0).length,
+    critical: items.filter((i) => i.stock <= 20 && i.stock > 0).length,
+    expiringSoon: items.filter((i) => i.isExpiringSoon).length,
+  }), [items]);
+
   return (
     <div className="space-y-6">
       {/* Sub Navigation Tabs */}
@@ -294,7 +184,7 @@ export default function InventoryPage() {
             <span>TOTAL SKUS</span>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2.5 font-mono">
-            1,248
+            {stats.totalSkus.toLocaleString()}
           </div>
         </div>
 
@@ -305,7 +195,7 @@ export default function InventoryPage() {
             <span>LOW STOCK ITEMS</span>
           </div>
           <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-2.5 font-mono">
-            18
+            {stats.lowStock}
           </div>
         </div>
 
@@ -316,7 +206,7 @@ export default function InventoryPage() {
             <span>CRITICAL STOCK</span>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2.5 font-mono">
-            5
+            {stats.critical}
           </div>
         </div>
 
@@ -327,7 +217,7 @@ export default function InventoryPage() {
             <span>EXPIRING SOON</span>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2.5 font-mono">
-            7
+            {stats.expiringSoon}
           </div>
         </div>
       </div>
@@ -463,8 +353,9 @@ export default function InventoryPage() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-[13px]">
+          <PageState loading={loading} error={error} onRetry={refetch}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-[13px]">
               <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="py-3.5 px-5">PRODUCT NAME</th>
@@ -566,10 +457,11 @@ export default function InventoryPage() {
               </tbody>
             </table>
           </div>
+          </PageState>
 
           {/* Pagination Footer */}
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <div>Showing 1 to {filteredItems.length} of 1,248 entries</div>
+            <div>Showing 1 to {filteredItems.length} of {items.length.toLocaleString()} entries</div>
             <div className="flex items-center gap-1">
               <button
                 disabled={currentPage === 1}

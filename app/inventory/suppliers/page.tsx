@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Truck,
@@ -14,118 +14,41 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
-  MoreVertical,
-  ExternalLink,
   CheckCircle2,
   FilePlus2,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import AddSupplierModal from "@/components/inventory/add-supplier-modal";
-
-interface Supplier {
-  id: string;
-  name: string;
-  category: "Medications" | "Medical Supplies" | "Equipment" | "Diagnostics";
-  contact: {
-    name: string;
-    email: string;
-    phone?: string;
-  };
-  rating: number;
-  status: "Active" | "Inactive";
-}
-
-const INITIAL_SUPPLIERS: Supplier[] = [
-  {
-    id: "SUP-001",
-    name: "GlaxoSmithKline (GSK)",
-    category: "Medications",
-    contact: {
-      name: "Sarah Jenkins",
-      email: "s.jenkins@gsk.com",
-      phone: "+251 911 234 567",
-    },
-    rating: 5,
-    status: "Active",
-  },
-  {
-    id: "SUP-002",
-    name: "Pfizer Inc.",
-    category: "Medications",
-    contact: {
-      name: "Marcus Thorne",
-      email: "m.thorne@pfizer.com",
-      phone: "+251 922 456 789",
-    },
-    rating: 5,
-    status: "Active",
-  },
-  {
-    id: "SUP-045",
-    name: "Medline Industries",
-    category: "Medical Supplies",
-    contact: {
-      name: "Elena Rodriguez",
-      email: "erodriguez@medline.com",
-      phone: "+251 933 567 890",
-    },
-    rating: 5,
-    status: "Active",
-  },
-  {
-    id: "SUP-089",
-    name: "Apex Medical Gear",
-    category: "Equipment",
-    contact: {
-      name: "David Chen",
-      email: "d.chen@apexmed.com",
-      phone: "+251 944 678 901",
-    },
-    rating: 0,
-    status: "Inactive",
-  },
-  {
-    id: "SUP-012",
-    name: "PharmaCorp East Africa",
-    category: "Medications",
-    contact: {
-      name: "Dr. Tadesse Bekele",
-      email: "orders@pharmacorp.ea",
-      phone: "+251 11 662 4321",
-    },
-    rating: 5,
-    status: "Active",
-  },
-  {
-    id: "SUP-033",
-    name: "EthioMed Logistics",
-    category: "Medical Supplies",
-    contact: {
-      name: "Tigist Lemma",
-      email: "logistics@ethiomed.et",
-      phone: "+251 11 551 2233",
-    },
-    rating: 4,
-    status: "Active",
-  },
-];
+import { PageState } from "@/components/ui/page-state";
+import { getSuppliers, createSupplier, getPurchaseOrders } from "@/lib/api";
+import type { Supplier } from "@/lib/types";
+import { useApi } from "@/lib/hooks/use-api";
 
 export default function SupplierManagementPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(INITIAL_SUPPLIERS);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const { data, loading, error, refetch } = useApi(() => getSuppliers(), []);
+  const { data: purchaseOrders } = useApi(() => getPurchaseOrders(), []);
+  const suppliers = data ?? [];
+  const orders = purchaseOrders ?? [];
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleAddSupplier = (newSup: any) => {
-    setSuppliers((prev) => [newSup, ...prev]);
-    showToast(`Added supplier "${newSup.name}"`);
+  const handleAddSupplier = async (newSup: Partial<Supplier>) => {
+    try {
+      await createSupplier(newSup);
+      await refetch();
+      showToast(`Added supplier "${newSup.name}"`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to add supplier");
+    }
   };
 
   const handleExportCSV = () => {
@@ -133,7 +56,7 @@ export default function SupplierManagementPage() {
     const rows = suppliers
       .map(
         (s) =>
-          `"${s.id}","${s.name}","${s.category}","${s.contact.name}","${s.contact.email}",${s.rating},"${s.status}"`
+          `"${s.id}","${s.name}","${s.category}","${s.contact?.name ?? ""}","${s.contact?.email ?? ""}",${s.rating ?? 0},"${s.status ?? ""}"`
       )
       .join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
@@ -153,7 +76,7 @@ export default function SupplierManagementPage() {
         const q = searchQuery.toLowerCase();
         const matchesName = s.name.toLowerCase().includes(q);
         const matchesId = s.id.toLowerCase().includes(q);
-        const matchesContact = s.contact.name.toLowerCase().includes(q);
+        const matchesContact = s.contact?.name?.toLowerCase().includes(q) ?? false;
         if (!matchesName && !matchesId && !matchesContact) return false;
       }
       if (categoryFilter !== "All Categories" && s.category !== categoryFilter) {
@@ -162,6 +85,30 @@ export default function SupplierManagementPage() {
       return true;
     });
   }, [suppliers, searchQuery, categoryFilter]);
+
+  const stats = useMemo(() => {
+    const active = suppliers.filter((s) => s.status === "Active").length;
+    const pendingDeliveries = orders.filter(
+      (o) => o.status === "PENDING" || o.status === "SHIPPED"
+    ).length;
+    const rated = suppliers.filter((s) => s.rating != null);
+    const avgFulfillment =
+      rated.length > 0
+        ? rated.reduce((sum, s) => sum + (s.rating ?? 0), 0) / rated.length
+        : 0;
+    const monthSpend = orders.reduce((sum, o) => {
+      const total = parseFloat(String(o.total).replace(/,/g, ""));
+      return sum + (Number.isNaN(total) ? 0 : total);
+    }, 0);
+
+    return {
+      total: suppliers.length,
+      active,
+      pendingDeliveries,
+      avgFulfillment,
+      monthSpend,
+    };
+  }, [suppliers, orders]);
 
   return (
     <div className="space-y-6">
@@ -219,7 +166,7 @@ export default function SupplierManagementPage() {
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">24</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">{stats.active}</span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Active</span>
           </div>
         </div>
@@ -235,7 +182,9 @@ export default function SupplierManagementPage() {
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">5</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
+              {loading ? "—" : stats.pendingDeliveries}
+            </span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Shipments expected</span>
           </div>
         </div>
@@ -251,7 +200,9 @@ export default function SupplierManagementPage() {
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">3.2</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
+              {loading ? "—" : stats.avgFulfillment > 0 ? stats.avgFulfillment.toFixed(1) : "—"}
+            </span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Days</span>
           </div>
         </div>
@@ -268,7 +219,11 @@ export default function SupplierManagementPage() {
           </div>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl lg:text-[26px] font-extrabold text-slate-800 dark:text-slate-100 font-mono">
-              $142.5k
+              {loading
+                ? "—"
+                : stats.monthSpend > 0
+                  ? `${stats.monthSpend.toLocaleString("en-US", { maximumFractionDigits: 0 })} ETB`
+                  : "—"}
             </span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">This Month</span>
           </div>
@@ -327,8 +282,9 @@ export default function SupplierManagementPage() {
         </div>
 
         {/* Suppliers Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-[13px]">
+        <PageState loading={loading} error={error} onRetry={refetch}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-[13px]">
             <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-3.5 px-6">SUPPLIER NAME</th>
@@ -349,6 +305,7 @@ export default function SupplierManagementPage() {
               ) : (
                 filteredSuppliers.map((supplier) => {
                   const isInactive = supplier.status === "Inactive";
+                  const rating = supplier.rating ?? 0;
 
                   return (
                     <tr
@@ -383,10 +340,10 @@ export default function SupplierManagementPage() {
                       {/* Contact */}
                       <td className="py-3.5 px-6">
                         <div className="text-slate-800 dark:text-slate-200 font-medium">
-                          {supplier.contact.name}
+                          {supplier.contact?.name ?? "—"}
                         </div>
                         <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
-                          {supplier.contact.email}
+                          {supplier.contact?.email ?? "—"}
                         </div>
                       </td>
 
@@ -397,7 +354,7 @@ export default function SupplierManagementPage() {
                             <Star
                               key={star}
                               className={`h-3.5 w-3.5 ${
-                                star <= supplier.rating
+                                star <= rating
                                   ? "fill-amber-400 text-amber-400"
                                   : "text-slate-200 dark:text-slate-700"
                               }`}
@@ -443,10 +400,11 @@ export default function SupplierManagementPage() {
             </tbody>
           </table>
         </div>
+        </PageState>
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <div>Showing 1-{filteredSuppliers.length} of 24 Suppliers</div>
+          <div>Showing 1-{filteredSuppliers.length} of {stats.total} Suppliers</div>
           <div className="flex items-center gap-3">
             <button
               disabled={currentPage === 1}

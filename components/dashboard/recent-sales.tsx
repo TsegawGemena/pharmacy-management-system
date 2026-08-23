@@ -2,42 +2,79 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Banknote, Smartphone } from "lucide-react";
+import { ArrowRight, Banknote, Loader2, Smartphone } from "lucide-react";
+import { getDashboard, getInvoices } from "@/lib/api";
+import { useApi } from "@/lib/hooks/use-api";
+import type { Invoice } from "@/lib/types";
+
+const RECENT_LIMIT = 5;
+
+interface SaleRow {
+  invoice: string;
+  product: string;
+  items: number;
+  amount: string;
+  paymentMethod: string;
+  paymentType: "cash" | "mobile";
+  status: string;
+}
+
+function normalizePaymentType(method: unknown): "cash" | "mobile" {
+  const value = String(method ?? "").toLowerCase();
+  if (value.includes("cash")) return "cash";
+  return "mobile";
+}
+
+function formatAmount(value: unknown): string {
+  if (typeof value === "number") {
+    return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return String(value ?? "0.00");
+}
+
+function mapDashboardSale(item: Record<string, unknown>): SaleRow {
+  const paymentMethod = String(item.paymentMethod ?? "Cash");
+  return {
+    invoice: String(item.invoice ?? item.invoiceNumber ?? item.id ?? "—"),
+    product: String(item.product ?? item.productName ?? item.customerName ?? "—"),
+    items: Number(item.items ?? item.itemCount ?? item.qty ?? 1),
+    amount: formatAmount(item.amount ?? item.total),
+    paymentMethod,
+    paymentType: normalizePaymentType(item.paymentMethod),
+    status: String(item.status ?? "PAID").toUpperCase(),
+  };
+}
+
+function mapInvoice(invoice: Invoice): SaleRow {
+  return {
+    invoice: invoice.id,
+    product: invoice.customerName || "—",
+    items: 1,
+    amount: invoice.amount,
+    paymentMethod: invoice.paymentMethod,
+    paymentType: normalizePaymentType(invoice.paymentMethod),
+    status: invoice.status.toUpperCase(),
+  };
+}
 
 export default function RecentSales() {
-  const sales = [
-    {
-      invoice: "INV-00124",
-      product: "Amoxicillin 500mg (3 Units)",
-      items: 3,
-      amount: "3,850.00",
-      paymentMethod: "Cash",
-      paymentType: "cash",
-      status: "PAID",
-    },
-    {
-      invoice: "INV-00123",
-      product: "Paracetamol 500mg (5 Units)",
-      items: 5,
-      amount: "1,240.00",
-      paymentMethod: "Mobile Money",
-      paymentType: "mobile",
-      status: "PAID",
-    },
-    {
-      invoice: "INV-00122",
-      product: "Omeprazole 20mg (2 Units)",
-      items: 2,
-      amount: "420.00",
-      paymentMethod: "Cash",
-      paymentType: "cash",
-      status: "PAID",
-    },
-  ];
+  const { data: dashboard, loading: dashboardLoading } = useApi(getDashboard);
+  const hasDashboardSales = (dashboard?.recentSales?.length ?? 0) > 0;
+
+  const { data: invoices, loading: invoicesLoading } = useApi(
+    () => getInvoices().then((list) => list.slice(0, RECENT_LIMIT)),
+    [],
+    { enabled: !dashboardLoading && !hasDashboardSales }
+  );
+
+  const loading = dashboardLoading || (!hasDashboardSales && invoicesLoading);
+
+  const sales: SaleRow[] = hasDashboardSales
+    ? (dashboard!.recentSales as Record<string, unknown>[]).map(mapDashboardSale).slice(0, RECENT_LIMIT)
+    : (invoices ?? []).map(mapInvoice);
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
-      {/* Card Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
         <h2 className="text-base lg:text-[17px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">
           Recent Sales
@@ -51,7 +88,6 @@ export default function RecentSales() {
         </Link>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -65,42 +101,59 @@ export default function RecentSales() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
-            {sales.map((sale) => (
-              <tr
-                key={sale.invoice}
-                className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
-              >
-                <td className="py-3.5 px-6 font-mono font-medium text-sky-600 dark:text-sky-400">
-                  <Link href={`/invoices?id=${sale.invoice}`} className="hover:underline">
-                    {sale.invoice}
-                  </Link>
-                </td>
-                <td className="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
-                  {sale.product}
-                </td>
-                <td className="py-3.5 px-6 text-slate-600 dark:text-slate-400 font-mono">
-                  {sale.items}
-                </td>
-                <td className="py-3.5 px-6 font-mono font-bold text-slate-800 dark:text-slate-100">
-                  {sale.amount}
-                </td>
-                <td className="py-3.5 px-6 text-slate-700 dark:text-slate-300">
-                  <div className="flex items-center gap-1.5">
-                    {sale.paymentType === "cash" ? (
-                      <Banknote className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <Smartphone className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                    )}
-                    <span>{sale.paymentMethod}</span>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="py-12 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400">
+                    <Loader2 className="h-6 w-6 animate-spin text-sky-600" />
+                    <span className="text-sm font-medium">Loading recent sales...</span>
                   </div>
                 </td>
-                <td className="py-3.5 px-6 text-center">
-                  <span className="inline-flex items-center rounded-full bg-teal-50 dark:bg-teal-950/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
-                    {sale.status}
-                  </span>
+              </tr>
+            ) : sales.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                  No recent sales found.
                 </td>
               </tr>
-            ))}
+            ) : (
+              sales.map((sale) => (
+                <tr
+                  key={sale.invoice}
+                  className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
+                >
+                  <td className="py-3.5 px-6 font-mono font-medium text-sky-600 dark:text-sky-400">
+                    <Link href={`/invoices?id=${sale.invoice}`} className="hover:underline">
+                      {sale.invoice}
+                    </Link>
+                  </td>
+                  <td className="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                    {sale.product}
+                  </td>
+                  <td className="py-3.5 px-6 text-slate-600 dark:text-slate-400 font-mono">
+                    {sale.items}
+                  </td>
+                  <td className="py-3.5 px-6 font-mono font-bold text-slate-800 dark:text-slate-100">
+                    {sale.amount}
+                  </td>
+                  <td className="py-3.5 px-6 text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-1.5">
+                      {sale.paymentType === "cash" ? (
+                        <Banknote className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <Smartphone className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                      )}
+                      <span>{sale.paymentMethod}</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-6 text-center">
+                    <span className="inline-flex items-center rounded-full bg-teal-50 dark:bg-teal-950/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
+                      {sale.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

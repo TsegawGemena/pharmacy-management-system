@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Bell, Calendar, Menu } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
+import { getStoredUser } from "@/lib/api";
+import type { User } from "@/lib/types";
 
 interface HeaderProps {
   title?: string;
@@ -18,6 +20,11 @@ export default function Header({
   onOpenMobileMenu,
 }: HeaderProps) {
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setUser(getStoredUser());
+  }, [pathname]);
 
   // Dynamic header title based on current route if not explicitly passed
   let displayTitle = title;
@@ -115,8 +122,8 @@ export default function Header({
           title="View Profile Settings"
         >
           <img
-            src="/pharmacist-avatar.png"
-            alt="Abebe Kebede Pharmacist"
+            src={user?.avatarUrl || "/pharmacist-avatar.png"}
+            alt={user?.name || "User profile"}
             className="h-full w-full object-cover"
           />
         </Link>

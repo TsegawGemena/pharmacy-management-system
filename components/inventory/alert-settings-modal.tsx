@@ -1,32 +1,43 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, SlidersHorizontal, Bell, CheckCircle2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, SlidersHorizontal, CheckCircle2 } from "lucide-react";
+import type { AlertSettings } from "@/lib/api/settings";
 
 interface AlertSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (settings: any) => void;
+  initialSettings?: AlertSettings | null;
+  onSave: (settings: AlertSettings) => void;
 }
 
 export default function AlertSettingsModal({
   isOpen,
   onClose,
+  initialSettings,
   onSave,
 }: AlertSettingsModalProps) {
-  const [criticalUnits, setCriticalUnits] = useState(5);
-  const [lowStockLeadDays, setLowStockLeadDays] = useState(14);
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [autoDraftPO, setAutoDraftPO] = useState(true);
+  const [criticalUnits, setCriticalUnits] = useState(0);
+  const [lowStockLeadDays, setLowStockLeadDays] = useState(0);
+  const [emailAlerts, setEmailAlerts] = useState(false);
+  const [autoDraftPO, setAutoDraftPO] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setCriticalUnits(Number(initialSettings?.threshold ?? 0));
+    setLowStockLeadDays(Number(initialSettings?.daysBeforeExpiry ?? 0));
+    setEmailAlerts(Boolean(initialSettings?.enabled ?? false));
+    setAutoDraftPO(Boolean(initialSettings?.autoDraftPO ?? false));
+  }, [isOpen, initialSettings]);
 
   if (!isOpen) return null;
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      criticalUnits,
-      lowStockLeadDays,
-      emailAlerts,
+      threshold: criticalUnits,
+      daysBeforeExpiry: lowStockLeadDays,
+      enabled: emailAlerts,
       autoDraftPO,
     });
     onClose();
@@ -62,7 +73,7 @@ export default function AlertSettingsModal({
             </label>
             <input
               type="number"
-              min="1"
+              min="0"
               max="50"
               value={criticalUnits}
               onChange={(e) => setCriticalUnits(Number(e.target.value))}
@@ -77,7 +88,7 @@ export default function AlertSettingsModal({
             </label>
             <input
               type="number"
-              min="1"
+              min="0"
               max="60"
               value={lowStockLeadDays}
               onChange={(e) => setLowStockLeadDays(Number(e.target.value))}

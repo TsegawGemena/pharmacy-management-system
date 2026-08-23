@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -11,104 +11,88 @@ import {
   Search,
   CheckCircle2,
   ShieldCheck,
-  Calendar,
   CreditCard,
   FileText,
-  Save,
-  Send,
-  ArrowLeft,
-  DollarSign,
+  Loader2,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
+import {
+  createPurchaseOrder,
+  getProducts,
+  getSuppliers,
+  submitPurchaseOrder,
+} from "@/lib/api";
+import { useApi, useMutation } from "@/lib/hooks/use-api";
+import type { Product, Supplier } from "@/lib/types";
 
 interface LineItem {
   id: string;
+  productId?: string;
   name: string;
   sku: string;
   unitPrice: number;
   quantity: number;
 }
 
-const SUPPLIER_DATABASE: Record<
-  string,
-  {
-    name: string;
-    rating: string;
-    email: string;
-    phone: string;
-    address: string;
-  }
-> = {
-  "GlaxoSmithKline (GSK)": {
-    name: "GlaxoSmithKline (GSK)",
-    rating: "4.8/5 (Excellent)",
-    email: "sales@gsk.com",
-    phone: "+251 911 234 567",
-    address: "Bole Sub-city, Addis Ababa, Ethiopia",
-  },
-  "Pfizer Inc.": {
-    name: "Pfizer Inc.",
-    rating: "4.9/5 (Exceptional)",
-    email: "orders@pfizer.com",
-    phone: "+251 922 456 789",
-    address: "Kirkos Sub-city, Addis Ababa, Ethiopia",
-  },
-  "PharmaCorp East Africa": {
-    name: "PharmaCorp East Africa",
-    rating: "4.8/5 (Excellent)",
-    email: "orders@pharmacorp.ea",
-    phone: "+251 11 662 4321",
-    address: "Bole Sub-city, Woreda 03, Addis Ababa, Ethiopia",
-  },
-  "Medline Industries": {
-    name: "Medline Industries",
-    rating: "4.7/5 (Very Good)",
-    email: "erodriguez@medline.com",
-    phone: "+251 933 567 890",
-    address: "Nifas Silk, Addis Ababa, Ethiopia",
-  },
-};
-
-const CATALOG_ITEMS = [
-  { name: "Amoxicillin 500mg", sku: "AMX-500-CAP", unitPrice: 12.5 },
-  { name: "Paracetamol 500mg (Panadol)", sku: "PAR-500-TAB", unitPrice: 5.0 },
-  { name: "Azithromycin 500mg", sku: "AZI-500-TAB", unitPrice: 35.0 },
-  { name: "Omeprazole 20mg", sku: "OME-020-CAP", unitPrice: 8.5 },
-  { name: "Ibuprofen 400mg", sku: "IBU-400-TAB", unitPrice: 4.5 },
-  { name: "Ciprofloxacin 500mg", sku: "CIP-500-TAB", unitPrice: 18.0 },
-  { name: "Metformin 500mg", sku: "MET-500-TAB", unitPrice: 3.5 },
-];
+interface CatalogItem {
+  id: string;
+  name: string;
+  sku: string;
+  unitPrice: number;
+}
 
 function CreatePurchaseOrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialSup = searchParams.get("supplier") || "GlaxoSmithKline (GSK)";
+  const supplierParam = searchParams.get("supplier");
 
-  const [selectedSupplier, setSelectedSupplier] = useState<string>(initialSup);
-  const [poNumber] = useState("PO-2023-1045");
-  const [orderDate, setOrderDate] = useState("2023-10-24");
+  const { data: suppliersData, loading: suppliersLoading } = useApi(
+    () => getSuppliers(),
+    []
+  );
+  const { data: productsData, loading: productsLoading } = useApi(
+    () => getProducts({ limit: 200 }),
+    []
+  );
+
+  const suppliers = suppliersData ?? [];
+  const catalogItems: CatalogItem[] = useMemo(
+    () =>
+      (productsData?.data ?? []).map((p: Product) => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        unitPrice: parseFloat(p.price) || 0,
+      })),
+    [productsData]
+  );
+
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
+  const [orderDate, setOrderDate] = useState(
+    () => new Date().toISOString().split("T")[0]
+  );
   const [expectedDelivery, setExpectedDelivery] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("Net 30");
   const [searchProductQuery, setSearchProductQuery] = useState("");
-
-  const [items, setItems] = useState<LineItem[]>([
-    {
-      id: "item-1",
-      name: "Amoxicillin 500mg",
-      sku: "AMX-500-CAP",
-      unitPrice: 12.5,
-      quantity: 100,
-    },
-    {
-      id: "item-2",
-      name: "Paracetamol 500mg (Panadol)",
-      sku: "PAR-500-TAB",
-      unitPrice: 5.0,
-      quantity: 500,
-    },
-  ]);
-
+  const [items, setItems] = useState<LineItem[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { mutate: createOrder } = useMutation(createPurchaseOrder);
+  const { mutate: submitOrder } = useMutation(submitPurchaseOrder);
+
+  useEffect(() => {
+    if (suppliers.length === 0) return;
+    if (selectedSupplierId) return;
+    const match = supplierParam
+      ? suppliers.find(
+          (s) => s.id === supplierParam || s.name === supplierParam
+        )
+      : null;
+    setSelectedSupplierId(match?.id ?? suppliers[0].id);
+  }, [suppliers, supplierParam, selectedSupplierId]);
+
+  const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -145,7 +129,7 @@ function CreatePurchaseOrderContent() {
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleAddCatalogItem = (catalogItem: (typeof CATALOG_ITEMS)[0]) => {
+  const handleAddCatalogItem = (catalogItem: CatalogItem) => {
     const existing = items.find((i) => i.sku === catalogItem.sku);
     if (existing) {
       handleQuantityChange(existing.id, existing.quantity + 50);
@@ -155,10 +139,11 @@ function CreatePurchaseOrderContent() {
         ...prev,
         {
           id: `item-${Date.now()}`,
+          productId: catalogItem.id,
           name: catalogItem.name,
           sku: catalogItem.sku,
           unitPrice: catalogItem.unitPrice,
-          quantity: 100,
+          quantity: 1,
         },
       ]);
       showToast(`Added ${catalogItem.name} to order`);
@@ -172,33 +157,87 @@ function CreatePurchaseOrderContent() {
       ...prev,
       {
         id: newId,
-        name: "New Pharmaceutical Item",
-        sku: `MED-${Math.floor(100 + Math.random() * 900)}`,
-        unitPrice: 10.0,
-        quantity: 50,
+        name: "",
+        sku: "",
+        unitPrice: 0,
+        quantity: 1,
       },
     ]);
   };
 
-  const handleSaveDraft = () => {
-    showToast("Purchase Order saved as Draft (PO-2023-1045)");
+  const buildOrderPayload = (status: "DRAFT" | "PENDING") => {
+    if (!selectedSupplier) {
+      throw new Error("Please select a supplier");
+    }
+    if (items.length === 0) {
+      throw new Error("Add at least one line item");
+    }
+    return {
+      supplier: { name: selectedSupplier.name },
+      dateOrdered: orderDate,
+      expectedDelivery: expectedDelivery || orderDate,
+      total: grandTotal.toFixed(2),
+      status,
+      paymentTerms,
+      items: items.map((item) => ({
+        productId: item.productId,
+        sku: item.sku,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
+    };
   };
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const handleSaveDraft = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const payload = buildOrderPayload("DRAFT");
+      const created = await createOrder(payload);
+      if (created) {
+        showToast(`Purchase Order saved as Draft (${created.id})`);
+      } else {
+        showToast("Failed to save draft");
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to save draft");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast("Purchase Order submitted successfully!");
-    setTimeout(() => {
-      router.push("/inventory/purchase-orders");
-    }, 1200);
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const payload = buildOrderPayload("DRAFT");
+      const created = await createOrder(payload);
+      if (!created) {
+        showToast("Failed to create purchase order");
+        return;
+      }
+      await submitOrder(created.id);
+      showToast("Purchase Order submitted successfully!");
+      setTimeout(() => {
+        router.push("/inventory/purchase-orders");
+      }, 1200);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to submit order");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const currentSupplierInfo = SUPPLIER_DATABASE[selectedSupplier] || {
-    name: selectedSupplier,
-    rating: "4.8/5 (Excellent)",
-    email: "sales@vendor.com",
-    phone: "+251 911 000 000",
-    address: "Addis Ababa, Ethiopia",
+  const formatRating = (supplier: Supplier) => {
+    if (supplier.rating == null) return "—";
+    return `${supplier.rating.toFixed(1)}/5`;
   };
+
+  const filteredCatalog = catalogItems.filter((i) =>
+    i.name.toLowerCase().includes(searchProductQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -241,16 +280,18 @@ function CreatePurchaseOrderContent() {
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-lg transition-colors shadow-2xs cursor-pointer"
+            disabled={isSaving || suppliersLoading}
+            className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-lg transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
           >
-            Save as Draft
+            {isSaving ? "Saving..." : "Save as Draft"}
           </button>
           <button
             type="button"
             onClick={handleSubmitOrder}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer"
+            disabled={isSaving || suppliersLoading}
+            className="px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer disabled:opacity-50"
           >
-            Submit Purchase Order
+            {isSaving ? "Submitting..." : "Submit Purchase Order"}
           </button>
         </div>
       </div>
@@ -272,14 +313,22 @@ function CreatePurchaseOrderContent() {
                   SELECT SUPPLIER
                 </label>
                 <select
-                  value={selectedSupplier}
-                  onChange={(e) => setSelectedSupplier(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-sky-500 font-medium"
+                  value={selectedSupplierId}
+                  onChange={(e) => setSelectedSupplierId(e.target.value)}
+                  disabled={suppliersLoading || suppliers.length === 0}
+                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-sky-500 font-medium disabled:opacity-50"
                 >
-                  <option value="GlaxoSmithKline (GSK)">GlaxoSmithKline (GSK)</option>
-                  <option value="Pfizer Inc.">Pfizer Inc.</option>
-                  <option value="PharmaCorp East Africa">PharmaCorp East Africa</option>
-                  <option value="Medline Industries">Medline Industries</option>
+                  {suppliersLoading && (
+                    <option value="">Loading suppliers...</option>
+                  )}
+                  {!suppliersLoading && suppliers.length === 0 && (
+                    <option value="">No suppliers available</option>
+                  )}
+                  {suppliers.map((sup) => (
+                    <option key={sup.id} value={sup.id}>
+                      {sup.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -291,24 +340,29 @@ function CreatePurchaseOrderContent() {
                   </div>
                   <div className="space-y-0.5 text-xs">
                     <div className="font-bold text-slate-800 dark:text-slate-100 text-[13px]">
-                      {currentSupplierInfo.name}
+                      {selectedSupplier.name}
                     </div>
                     <div className="text-slate-500 dark:text-slate-400 font-medium">
                       Rating:{" "}
                       <span className="text-amber-700 dark:text-amber-400 font-semibold">
-                        {currentSupplierInfo.rating}
+                        {formatRating(selectedSupplier)}
                       </span>
                     </div>
                     <div className="text-slate-500 dark:text-slate-400">
                       Contact:{" "}
                       <span className="text-slate-700 dark:text-slate-300 font-mono">
-                        {currentSupplierInfo.email}
+                        {selectedSupplier.contact?.email || "—"}
                       </span>{" "}
                       |{" "}
                       <span className="text-slate-700 dark:text-slate-300 font-mono">
-                        {currentSupplierInfo.phone}
+                        {selectedSupplier.contact?.phone || "—"}
                       </span>
                     </div>
+                    {selectedSupplier.address && (
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {selectedSupplier.address}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -339,9 +393,18 @@ function CreatePurchaseOrderContent() {
                 {/* Search Dropdown */}
                 {searchProductQuery.trim() && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg z-20 max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
-                    {CATALOG_ITEMS.filter((i) =>
-                      i.name.toLowerCase().includes(searchProductQuery.toLowerCase())
-                    ).map((p) => (
+                    {productsLoading && (
+                      <div className="px-3 py-2 text-xs text-slate-400 flex items-center gap-2">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Loading products...
+                      </div>
+                    )}
+                    {!productsLoading && filteredCatalog.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-400">
+                        No products found
+                      </div>
+                    )}
+                    {filteredCatalog.map((p) => (
                       <button
                         key={p.sku}
                         type="button"
@@ -470,7 +533,7 @@ function CreatePurchaseOrderContent() {
                 <input
                   type="text"
                   disabled
-                  value={poNumber}
+                  value="Generated on save"
                   className="w-full px-3 py-2 text-xs sm:text-sm font-mono font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed"
                 />
               </div>

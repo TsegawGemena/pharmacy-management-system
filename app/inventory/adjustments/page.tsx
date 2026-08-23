@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import Link from "next/link";
+import React, { useMemo, useState } from "react";
 import {
-  Package,
   RefreshCw,
   TrendingDown,
   DollarSign,
@@ -18,97 +16,37 @@ import {
   CheckCircle2,
   MoreVertical,
   FileEdit,
-  RotateCcw,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import CreateAdjustmentModal from "@/components/inventory/create-adjustment-modal";
-
-interface AdjustmentRecord {
-  id: string; // e.g. "#ADJ-092"
-  date: string;
-  productName: string;
-  sku: string;
-  type: "Expired" | "Inventory Count" | "Damaged" | "Theft / Lost" | "Return to Supplier";
-  qtyChange: number;
-  adjustedBy: string;
-  status: "Completed" | "Pending Review";
-  reason?: string;
-}
-
-const INITIAL_ADJUSTMENTS: AdjustmentRecord[] = [
-  {
-    id: "#ADJ-092",
-    date: "Oct 24, 2023",
-    productName: "Amoxicillin 500mg Capsules",
-    sku: "AMX-500-CP",
-    type: "Expired",
-    qtyChange: -15,
-    adjustedBy: "Dr. Tadesse",
-    status: "Completed",
-    reason: "Batch past shelf life expiration date.",
-  },
-  {
-    id: "#ADJ-091",
-    date: "Oct 24, 2023",
-    productName: "Paracetamol 500mg Tablets",
-    sku: "PAR-500-TB",
-    type: "Inventory Count",
-    qtyChange: 24,
-    adjustedBy: "System (Auto)",
-    status: "Pending Review",
-    reason: "Physical cycle audit count exceeded ERP recorded quantity.",
-  },
-  {
-    id: "#ADJ-090",
-    date: "Oct 22, 2023",
-    productName: "Omeprazole 20mg",
-    sku: "OMP-020-CP",
-    type: "Damaged",
-    qtyChange: -2,
-    adjustedBy: "Alemayehu K.",
-    status: "Completed",
-    reason: "Moisture seal compromise detected during routine check.",
-  },
-  {
-    id: "#ADJ-089",
-    date: "Oct 20, 2023",
-    productName: "Azithromycin 500mg",
-    sku: "AZI-500-TB",
-    type: "Theft / Lost",
-    qtyChange: -4,
-    adjustedBy: "Dr. Tadesse",
-    status: "Completed",
-    reason: "Discrepancy identified during weekly dispensary reconciliation.",
-  },
-  {
-    id: "#ADJ-088",
-    date: "Oct 18, 2023",
-    productName: "Metformin 500mg",
-    sku: "MET-500-TB",
-    type: "Return to Supplier",
-    qtyChange: -50,
-    adjustedBy: "Abebe K.",
-    status: "Completed",
-    reason: "Supplier recall batch batch #MF-5510 returned for credit note.",
-  },
-];
+import { PageState } from "@/components/ui/page-state";
+import { getAdjustments, createAdjustment } from "@/lib/api";
+import type { Adjustment } from "@/lib/types";
+import { useApi } from "@/lib/hooks/use-api";
 
 export default function StockAdjustmentsPage() {
-  const [adjustments, setAdjustments] = useState<AdjustmentRecord[]>(INITIAL_ADJUSTMENTS);
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const { data, loading, error, refetch } = useApi(() => getAdjustments(), []);
+  const adjustments = data ?? [];
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleAddAdjustment = (newAdj: AdjustmentRecord) => {
-    setAdjustments((prev) => [newAdj, ...prev]);
-    showToast(`Created stock adjustment ${newAdj.id}`);
+  const handleAddAdjustment = async (newAdj: Partial<Adjustment>) => {
+    try {
+      const created = await createAdjustment(newAdj);
+      await refetch();
+      showToast(`Created stock adjustment ${created.id}`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to create adjustment");
+    }
   };
 
   const handleExportReport = () => {
@@ -138,6 +76,12 @@ export default function StockAdjustmentsPage() {
       return true;
     });
   }, [adjustments, typeFilter]);
+
+  const stats = useMemo(() => ({
+    total: adjustments.length,
+    damagedExpired: adjustments.filter((a) => a.type === "Expired" || a.type === "Damaged").length,
+    pendingReview: adjustments.filter((a) => a.status === "Pending Review").length,
+  }), [adjustments]);
 
   return (
     <div className="space-y-6">
@@ -193,11 +137,7 @@ export default function StockAdjustmentsPage() {
             <FileEdit className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           </div>
           <div className="flex items-center gap-3 mt-3">
-            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">142</span>
-            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
-              <TrendingDown className="h-3 w-3" />
-              12%
-            </span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">{stats.total}</span>
           </div>
         </div>
 
@@ -211,7 +151,7 @@ export default function StockAdjustmentsPage() {
               <DollarSign className="h-4 w-4 text-slate-400 dark:text-slate-500" />
             </div>
             <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">4,520</span>
+              <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">—</span>
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ETB</span>
             </div>
           </div>
@@ -231,7 +171,7 @@ export default function StockAdjustmentsPage() {
             <AlertTriangle className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           </div>
           <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">38</span>
+            <span className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">{stats.damagedExpired}</span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Items</span>
           </div>
         </div>
@@ -245,7 +185,7 @@ export default function StockAdjustmentsPage() {
             <ClipboardList className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           </div>
           <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 font-mono">12</span>
+            <span className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 font-mono">{stats.pendingReview}</span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Records</span>
           </div>
         </div>
@@ -291,7 +231,7 @@ export default function StockAdjustmentsPage() {
 
           {/* Pagination summary on right */}
           <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <span>1-10 of 142</span>
+            <span>1-{filteredAdjustments.length} of {adjustments.length}</span>
             <div className="flex items-center gap-1">
               <button
                 disabled={currentPage === 1}
@@ -311,8 +251,9 @@ export default function StockAdjustmentsPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-[13px]">
+        <PageState loading={loading} error={error} onRetry={refetch}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-[13px]">
             <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-3.5 px-6">ID</th>
@@ -431,6 +372,7 @@ export default function StockAdjustmentsPage() {
             </tbody>
           </table>
         </div>
+        </PageState>
       </div>
 
       {/* Create Adjustment Modal */}

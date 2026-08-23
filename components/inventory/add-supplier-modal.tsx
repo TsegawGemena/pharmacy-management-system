@@ -19,9 +19,9 @@ export default function AddSupplierModal({
     category: "Medications",
     contactName: "",
     contactEmail: "",
-    phone: "+251 ",
-    address: "Addis Ababa, Ethiopia",
-    rating: 5,
+    phone: "",
+    address: "",
+    rating: 0,
     status: "Active",
   });
 
@@ -30,7 +30,6 @@ export default function AddSupplierModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAddSupplier({
-      id: `SUP-${Math.floor(100 + Math.random() * 900)}`,
       name: formData.name,
       category: formData.category,
       contact: {

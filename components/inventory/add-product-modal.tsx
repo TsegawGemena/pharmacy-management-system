@@ -16,12 +16,12 @@ export default function AddProductModal({
 }: AddProductModalProps) {
   const [formData, setFormData] = useState({
     name: "",
-    category: "Antibiotics",
-    batchNo: `BX-${Math.floor(1000 + Math.random() * 9000)}`,
-    stock: 100,
-    minStock: 50,
-    expiryDate: "2026-10",
-    unitPrice: 150.0,
+    category: "",
+    batchNo: "",
+    stock: 0,
+    minStock: 0,
+    expiryDate: "",
+    unitPrice: 0,
   });
 
   if (!isOpen) return null;
@@ -29,7 +29,6 @@ export default function AddProductModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAddProduct({
-      id: `PRD-${Date.now()}`,
       name: formData.name,
       category: formData.category,
       batchNo: formData.batchNo,

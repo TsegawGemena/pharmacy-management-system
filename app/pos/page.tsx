@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Search,
   ScanBarcode,
@@ -9,16 +9,16 @@ import {
   Plus,
   Minus,
   Pause,
-  RotateCcw,
   CreditCard,
   Banknote,
   Smartphone,
   CheckCircle2,
-  Printer,
   X,
-  User,
-  AlertCircle,
 } from "lucide-react";
+import { completeSale, getPosProducts, holdSale } from "@/lib/api";
+import type { PosProduct as ApiPosProduct, PaymentMethod } from "@/lib/types";
+import { useApi } from "@/lib/hooks/use-api";
+import { PageState } from "@/components/ui/page-state";
 
 interface PosProduct {
   id: string;
@@ -36,98 +36,37 @@ interface CartItem {
   qty: number;
 }
 
-const CATALOG_ITEMS: PosProduct[] = [
-  {
-    id: "1",
-    name: "Amoxicillin 500mg Caps",
-    category: "Antibiotics",
-    stock: 145,
-    stockUnit: "145 units",
-    price: 120.0,
-  },
-  {
-    id: "2",
-    name: "Paracetamol 500mg Tabs",
-    category: "Pain Relief",
-    stock: 320,
-    stockUnit: "320 units",
-    price: 45.0,
-  },
-  {
-    id: "3",
-    name: "Ibuprofen 400mg Tabs",
-    category: "Pain Relief",
-    stock: 12,
-    stockUnit: "12 units",
-    price: 65.5,
-  },
-  {
-    id: "4",
-    name: "Vitamin C 1000mg Effervescent",
-    category: "Vitamins",
-    stock: 0,
-    stockUnit: "Out of Stock",
-    price: 210.0,
-  },
-  {
-    id: "5",
-    name: "Omeprazole 20mg Caps",
-    category: "Gastrointestinal",
-    stock: 89,
-    stockUnit: "89 units",
-    price: 180.0,
-  },
-  {
-    id: "6",
-    name: "Ceftriaxone 1g Inj",
-    category: "Antibiotics",
-    stock: 34,
-    stockUnit: "34 units",
-    price: 250.0,
-  },
-  {
-    id: "7",
-    name: "Metformin 500mg Tabs",
-    category: "Antidiabetic",
-    stock: 220,
-    stockUnit: "220 units",
-    price: 35.0,
-  },
-  {
-    id: "8",
-    name: "Sterile Gauze Bandage 4x4",
-    category: "First Aid",
-    stock: 60,
-    stockUnit: "60 units",
-    price: 30.0,
-  },
-];
+function mapPosProduct(product: ApiPosProduct): PosProduct {
+  return {
+    ...product,
+    stockUnit:
+      product.stock === 0 ? "Out of Stock" : `${product.stock} units`,
+  };
+}
 
 export default function PosPage() {
-  const [products, setProducts] = useState<PosProduct[]>(CATALOG_ITEMS);
+  const {
+    data: apiProducts,
+    loading: productsLoading,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useApi(getPosProducts);
+
+  const products = useMemo(
+    () => (apiProducts ?? []).map(mapPosProduct),
+    [apiProducts]
+  );
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [selectedCustomer, setSelectedCustomer] = useState("Walking Customer");
-  const [invNumber, setInvNumber] = useState("#INV-2023-089");
-
-  const [cart, setCart] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "Amoxicillin 500mg Caps",
-      price: 120.0,
-      qty: 2,
-    },
-    {
-      id: "2",
-      name: "Paracetamol 500mg Tabs",
-      price: 45.0,
-      qty: 1,
-    },
-  ]);
-
+  const [invNumber, setInvNumber] = useState("New Sale");
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "telebirr" | "card">("cash");
-  const [amountTendered, setAmountTendered] = useState<number>(350);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [amountTendered, setAmountTendered] = useState<number>(0);
+  const [isCompletingSale, setIsCompletingSale] = useState(false);
+  const [isHoldingCart, setIsHoldingCart] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -135,7 +74,6 @@ export default function PosPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Calculations
   const subtotal = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.price * item.qty, 0);
   }, [cart]);
@@ -150,7 +88,21 @@ export default function PosPage() {
 
   const changeDue = Math.max(0, amountTendered - total);
 
-  // Cart operations
+  const buildSalePayload = useCallback(
+    () => ({
+      customerName: selectedCustomer,
+      items: cart.map((item) => ({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        qty: item.qty,
+      })),
+      paymentMethod,
+      amountTendered: paymentMethod === "cash" ? amountTendered : undefined,
+    }),
+    [cart, selectedCustomer, paymentMethod, amountTendered]
+  );
+
   const handleAddToCart = (product: PosProduct) => {
     const currentProduct = products.find((p) => p.id === product.id) || product;
     const existingInCart = cart.find((item) => item.id === product.id);
@@ -210,34 +162,43 @@ export default function PosPage() {
     showToast("Cart cleared");
   };
 
-  const handleHoldCart = () => {
-    if (cart.length === 0) return;
-    showToast(`Held order ${invNumber} for later recall`);
-    setCart([]);
-    setInvNumber(`#INV-2023-${Math.floor(100 + Math.random() * 900)}`);
+  const handleHoldCart = async () => {
+    if (cart.length === 0 || isHoldingCart) return;
+    setIsHoldingCart(true);
+    try {
+      const response = await holdSale(buildSalePayload());
+      showToast(response.message || `Held order ${invNumber} for later recall`);
+      setCart([]);
+      setInvNumber("New Sale");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to hold cart");
+    } finally {
+      setIsHoldingCart(false);
+    }
   };
 
-  const handleCompleteSale = () => {
-    // Permanently deduct purchased quantities from product inventory
-    setProducts((prevProducts) =>
-      prevProducts.map((prod) => {
-        const cartItem = cart.find((c) => c.id === prod.id);
-        if (cartItem) {
-          const updatedStock = Math.max(0, prod.stock - cartItem.qty);
-          return {
-            ...prod,
-            stock: updatedStock,
-            stockUnit: updatedStock === 0 ? "Out of Stock" : `${updatedStock} units`,
-          };
-        }
-        return prod;
-      })
-    );
-
-    showToast(`Payment of ${total.toFixed(2)} ETB confirmed! Stock updated.`);
-    setIsPaymentModalOpen(false);
-    setCart([]);
-    setInvNumber(`#INV-2023-${Math.floor(100 + Math.random() * 900)}`);
+  const handleCompleteSale = async () => {
+    if (cart.length === 0 || isCompletingSale) return;
+    setIsCompletingSale(true);
+    try {
+      const response = await completeSale(buildSalePayload());
+      showToast(
+        response.message ||
+          `Payment of ${response.total.toFixed(2)} ETB confirmed! Stock updated.`
+      );
+      setIsPaymentModalOpen(false);
+      setCart([]);
+      if (response.invoiceNumber) {
+        setInvNumber(response.invoiceNumber);
+      } else {
+        setInvNumber("New Sale");
+      }
+      await refetchProducts();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to complete sale");
+    } finally {
+      setIsCompletingSale(false);
+    }
   };
 
   const filteredCatalog = useMemo(() => {
@@ -259,9 +220,13 @@ export default function PosPage() {
     });
   }, [products, searchQuery, selectedCategory]);
 
+  const openPaymentModal = () => {
+    setAmountTendered(Math.ceil(total));
+    setIsPaymentModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-6 z-50 flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium rounded-xl shadow-lg border border-slate-700 animate-in slide-in-from-top duration-200">
           <CheckCircle2 className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />
@@ -269,11 +234,8 @@ export default function PosPage() {
         </div>
       )}
 
-      {/* Main 2-Column POS Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Search, Category Filters, Products Catalog (~65%) */}
         <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
-          {/* Top Bar: Search with barcode scanner */}
           <div className="p-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
             <div className="relative">
               <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
@@ -293,7 +255,6 @@ export default function PosPage() {
               </button>
             </div>
 
-            {/* Filter Pills */}
             <div className="flex flex-wrap items-center gap-2">
               {[
                 "All Products",
@@ -317,101 +278,97 @@ export default function PosPage() {
             </div>
           </div>
 
-          {/* Products Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-[13px]">
-              <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <tr>
-                  <th className="py-3 px-5">Product Name</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4 text-center">Stock</th>
-                  <th className="py-3 px-5 text-right font-mono">Price (ETB)</th>
-                  <th className="py-3 px-3 w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredCatalog.map((product) => {
-                  const cartItem = cart.find((item) => item.id === product.id);
-                  const inCartQty = cartItem ? cartItem.qty : 0;
-                  const availableStock = Math.max(0, product.stock - inCartQty);
-                  const isOutOfStock = availableStock === 0;
+          <PageState
+            loading={productsLoading}
+            error={productsError}
+            onRetry={refetchProducts}
+            empty={!productsLoading && !productsError && filteredCatalog.length === 0}
+            emptyMessage="No products found."
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-[13px]">
+                <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <tr>
+                    <th className="py-3 px-5">Product Name</th>
+                    <th className="py-3 px-4">Category</th>
+                    <th className="py-3 px-4 text-center">Stock</th>
+                    <th className="py-3 px-5 text-right font-mono">Price (ETB)</th>
+                    <th className="py-3 px-3 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredCatalog.map((product) => {
+                    const cartItem = cart.find((item) => item.id === product.id);
+                    const inCartQty = cartItem ? cartItem.qty : 0;
+                    const availableStock = Math.max(0, product.stock - inCartQty);
+                    const isOutOfStock = availableStock === 0;
 
-                  return (
-                    <tr
-                      key={product.id}
-                      onClick={() => !isOutOfStock && handleAddToCart(product)}
-                      className={`transition-colors ${isOutOfStock
-                        ? "opacity-60 cursor-not-allowed bg-slate-50/30 dark:bg-slate-800/20"
-                        : "hover:bg-sky-50/40 dark:hover:bg-slate-800/60 cursor-pointer"
-                        }`}
-                    >
-                      {/* Product Name */}
-                      <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
-                        {product.name}
-                      </td>
-
-                      {/* Category */}
-                      <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium">
-                        {product.category}
-                      </td>
-
-                      {/* Stock Badge */}
-                      <td className="py-3.5 px-4 text-center">
-                        {isOutOfStock ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-                            Out of Stock
-                          </span>
-                        ) : availableStock <= 20 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                            <span>{availableStock} units</span>
-                            {inCartQty > 0 && (
-                              <span className="text-[9.5px] font-medium opacity-75">
-                                (-{inCartQty})
-                              </span>
-                            )}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
-                            <span>{availableStock} units</span>
-                            {inCartQty > 0 && (
-                              <span className="text-[9.5px] font-medium opacity-75">
-                                (-{inCartQty})
-                              </span>
-                            )}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Price */}
-                      <td className="py-3.5 px-5 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
-                        {product.price.toFixed(2)}
-                      </td>
-
-                      {/* Action */}
-                      <td className="py-3.5 px-3 text-center">
-                        <button
-                          disabled={isOutOfStock}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(product);
-                          }}
-                          className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-sky-100 dark:hover:bg-sky-950 text-slate-700 dark:text-slate-300 hover:text-sky-700 dark:hover:text-sky-400 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={isOutOfStock ? "Out of Stock" : `Add ${product.name}`}
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    return (
+                      <tr
+                        key={product.id}
+                        onClick={() => !isOutOfStock && handleAddToCart(product)}
+                        className={`transition-colors ${isOutOfStock
+                          ? "opacity-60 cursor-not-allowed bg-slate-50/30 dark:bg-slate-800/20"
+                          : "hover:bg-sky-50/40 dark:hover:bg-slate-800/60 cursor-pointer"
+                          }`}
+                      >
+                        <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
+                          {product.name}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium">
+                          {product.category}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          {isOutOfStock ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                              Out of Stock
+                            </span>
+                          ) : availableStock <= 20 ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                              <span>{availableStock} units</span>
+                              {inCartQty > 0 && (
+                                <span className="text-[9.5px] font-medium opacity-75">
+                                  (-{inCartQty})
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
+                              <span>{availableStock} units</span>
+                              {inCartQty > 0 && (
+                                <span className="text-[9.5px] font-medium opacity-75">
+                                  (-{inCartQty})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-5 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
+                          {product.price.toFixed(2)}
+                        </td>
+                        <td className="py-3.5 px-3 text-center">
+                          <button
+                            disabled={isOutOfStock}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(product);
+                            }}
+                            className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-sky-100 dark:hover:bg-sky-950 text-slate-700 dark:text-slate-300 hover:text-sky-700 dark:hover:text-sky-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title={isOutOfStock ? "Out of Stock" : `Add ${product.name}`}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </PageState>
         </div>
 
-        {/* Right Column: Current Sale Checkout (~35%) */}
         <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs space-y-4 transition-colors">
-          {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100 text-base">
               <ShoppingCart className="h-4 w-4 text-[#006699] dark:text-sky-400" />
@@ -421,7 +378,6 @@ export default function PosPage() {
               {invNumber}
             </span>
           </div>
-
 
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
             {cart.length === 0 ? (
@@ -458,7 +414,6 @@ export default function PosPage() {
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
-                      {/* Quantity Stepper */}
                       <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
                         <button
                           onClick={() => handleUpdateQty(item.id, -1)}
@@ -480,7 +435,6 @@ export default function PosPage() {
                         </button>
                       </div>
 
-                      {/* Subtotal */}
                       <div className="font-mono font-bold text-slate-800 dark:text-slate-100 text-sm">
                         {itemTotal.toFixed(2)}
                       </div>
@@ -491,7 +445,6 @@ export default function PosPage() {
             )}
           </div>
 
-          {/* Pricing Summary */}
           <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2 text-xs sm:text-sm">
             <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
               <span>Subtotal</span>
@@ -515,15 +468,14 @@ export default function PosPage() {
             </div>
           </div>
 
-          {/* Hold & Clear Actions */}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               onClick={handleHoldCart}
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || isHoldingCart}
               className="inline-flex items-center justify-center gap-1.5 py-2 border border-sky-200 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-950/50 text-[#006699] dark:text-sky-400 text-xs font-semibold rounded-lg transition-colors disabled:opacity-40"
             >
               <Pause className="h-3.5 w-3.5" />
-              <span>Hold</span>
+              <span>{isHoldingCart ? "Holding..." : "Hold"}</span>
             </button>
 
             <button
@@ -536,9 +488,8 @@ export default function PosPage() {
             </button>
           </div>
 
-          {/* Process Payment Button */}
           <button
-            onClick={() => setIsPaymentModalOpen(true)}
+            onClick={openPaymentModal}
             disabled={cart.length === 0}
             className="w-full py-3 bg-[#006699] hover:bg-[#005580] disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
@@ -548,7 +499,6 @@ export default function PosPage() {
         </div>
       </div>
 
-      {/* Payment Processing Modal */}
       {isPaymentModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-md overflow-hidden transition-colors">
@@ -575,7 +525,6 @@ export default function PosPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Payment Methods */}
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -614,7 +563,6 @@ export default function PosPage() {
                 </button>
               </div>
 
-              {/* Total & Tendered */}
               <div className="bg-slate-50 dark:bg-slate-800/70 p-4 rounded-xl space-y-2 border border-slate-200/80 dark:border-slate-700/80">
                 <div className="flex justify-between items-baseline">
                   <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Total Due</span>
@@ -646,13 +594,13 @@ export default function PosPage() {
                 )}
               </div>
 
-              {/* Complete Action */}
               <button
                 onClick={handleCompleteSale}
-                className="w-full py-3 bg-[#006699] hover:bg-[#005580] text-white rounded-xl text-sm font-bold shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                disabled={isCompletingSale}
+                className="w-full py-3 bg-[#006699] hover:bg-[#005580] disabled:opacity-70 text-white rounded-xl text-sm font-bold shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Confirm & Print Receipt</span>
+                <span>{isCompletingSale ? "Processing..." : "Confirm & Print Receipt"}</span>
               </button>
             </div>
           </div>

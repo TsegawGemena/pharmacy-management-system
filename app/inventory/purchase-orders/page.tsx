@@ -9,100 +9,69 @@ import {
   AlertTriangle,
   Plus,
   Search,
-  Filter as FilterIcon,
   Download,
   Package,
   ChevronLeft,
   ChevronRight,
   Eye,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
+import { getPurchaseOrders } from "@/lib/api";
+import { useApi } from "@/lib/hooks/use-api";
+import type { PurchaseOrder, PurchaseOrderStatus } from "@/lib/types";
 
-interface PurchaseOrder {
-  id: string; // e.g. "PO-2023-1045"
-  supplier: {
-    name: string;
-    avatar: string;
-    bgColor?: string;
-  };
-  dateOrdered: string;
-  expectedDelivery: string;
-  isDelayed?: boolean;
-  total: string;
-  status: "SHIPPED" | "PENDING" | "DRAFT" | "RECEIVED";
-}
-
-const INITIAL_POS: PurchaseOrder[] = [
-  {
-    id: "PO-2023-1045",
-    supplier: {
-      name: "PharmaCorp East Africa",
-      avatar: "PE",
-      bgColor: "bg-sky-500",
-    },
-    dateOrdered: "Oct 12, 2023",
-    expectedDelivery: "Oct 18, 2023",
-    isDelayed: false,
-    total: "45,200.00",
-    status: "SHIPPED",
-  },
-  {
-    id: "PO-2023-1042",
-    supplier: {
-      name: "EthioMed Logistics",
-      avatar: "EL",
-      bgColor: "bg-emerald-500",
-    },
-    dateOrdered: "Oct 05, 2023",
-    expectedDelivery: "Oct 10, 2023",
-    isDelayed: true,
-    total: "12,500.50",
-    status: "PENDING",
-  },
-  {
-    id: "PO-2023-1046",
-    supplier: {
-      name: "Global Meds Inc.",
-      avatar: "GM",
-      bgColor: "bg-indigo-500",
-    },
-    dateOrdered: "--",
-    expectedDelivery: "--",
-    isDelayed: false,
-    total: "8,900.00",
-    status: "DRAFT",
-  },
-  {
-    id: "PO-2023-1040",
-    supplier: {
-      name: "BioSupply Distributors",
-      avatar: "BS",
-      bgColor: "bg-teal-500",
-    },
-    dateOrdered: "Oct 01, 2023",
-    expectedDelivery: "Oct 05, 2023",
-    isDelayed: false,
-    total: "105,600.00",
-    status: "RECEIVED",
-  },
-  {
-    id: "PO-2023-1039",
-    supplier: {
-      name: "GlaxoSmithKline (GSK)",
-      avatar: "GS",
-      bgColor: "bg-orange-500",
-    },
-    dateOrdered: "Sep 28, 2023",
-    expectedDelivery: "Oct 04, 2023",
-    isDelayed: false,
-    total: "74,300.00",
-    status: "RECEIVED",
-  },
+const AVATAR_COLORS = [
+  "bg-sky-500",
+  "bg-emerald-500",
+  "bg-indigo-500",
+  "bg-teal-500",
+  "bg-orange-500",
 ];
 
+function formatDisplayDate(dateStr: string): string {
+  if (!dateStr || dateStr === "--") return "--";
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return dateStr;
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTotal(total: string): string {
+  const num = parseFloat(total.replace(/,/g, ""));
+  if (Number.isNaN(num)) return total;
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function getSupplierAvatar(name: string): string {
+  return name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getAvatarColor(name: string): string {
+  const idx =
+    name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+    AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx];
+}
+
 export default function PurchaseOrdersPage() {
-  const [orders, setOrders] = useState<PurchaseOrder[]>(INITIAL_POS);
+  const { data: apiOrders, loading, error, refetch } = useApi(
+    () => getPurchaseOrders(),
+    []
+  );
+  const orders = apiOrders ?? [];
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,6 +115,51 @@ export default function PurchaseOrdersPage() {
       return true;
     });
   }, [orders, searchQuery, statusFilter]);
+
+  const stats = useMemo(() => {
+    const pendingFulfillment = orders.filter(
+      (o) => o.status === "PENDING" || o.status === "SHIPPED"
+    ).length;
+    const delayed = orders.filter((o) => o.isDelayed).length;
+    const now = new Date();
+    const monthSpend = orders.reduce((sum, o) => {
+      const ordered = new Date(o.dateOrdered);
+      if (
+        !Number.isNaN(ordered.getTime()) &&
+        ordered.getMonth() === now.getMonth() &&
+        ordered.getFullYear() === now.getFullYear()
+      ) {
+        const val = parseFloat(o.total.replace(/,/g, ""));
+        return sum + (Number.isNaN(val) ? 0 : val);
+      }
+      return sum;
+    }, 0);
+    const spendLabel =
+      monthSpend >= 1000
+        ? `ETB ${(monthSpend / 1000).toFixed(1)}K`
+        : `ETB ${monthSpend.toFixed(0)}`;
+    return {
+      total: orders.length,
+      pendingFulfillment,
+      delayed,
+      monthSpend: spendLabel,
+    };
+  }, [orders]);
+
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const statusFilters: Array<PurchaseOrderStatus | "ALL"> = [
+    "ALL",
+    "SHIPPED",
+    "PENDING",
+    "DRAFT",
+    "RECEIVED",
+  ];
 
   return (
     <div className="space-y-6">
@@ -203,8 +217,14 @@ export default function PurchaseOrdersPage() {
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">142</span>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">/ 856 Total</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
+              {loading ? "—" : stats.total}
+            </span>
+            {!loading && stats.total > 0 && (
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                total orders
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Active currently</p>
         </div>
@@ -220,7 +240,9 @@ export default function PurchaseOrdersPage() {
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">28</span>
+            <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-mono">
+              {loading ? "—" : stats.pendingFulfillment}
+            </span>
           </div>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Orders awaiting receipt</p>
         </div>
@@ -237,12 +259,10 @@ export default function PurchaseOrdersPage() {
           </div>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl lg:text-[26px] font-extrabold text-slate-800 dark:text-slate-100 font-mono">
-              ETB 450.2K
+              {loading ? "—" : stats.monthSpend}
             </span>
           </div>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-            +12% vs last month
-          </p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Current month</p>
         </div>
 
         {/* DELAYED ORDERS */}
@@ -256,7 +276,9 @@ export default function PurchaseOrdersPage() {
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">3</span>
+            <span className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">
+              {loading ? "—" : stats.delayed}
+            </span>
           </div>
           <p className="text-[11px] text-rose-600/90 dark:text-rose-400/90 font-medium mt-1">
             Requires immediate attention
@@ -281,10 +303,13 @@ export default function PurchaseOrdersPage() {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-50 dark:bg-slate-800 text-xs">
-              {["ALL", "SHIPPED", "PENDING", "DRAFT", "RECEIVED"].map((st) => (
+              {statusFilters.map((st) => (
                 <button
                   key={st}
-                  onClick={() => setStatusFilter(st)}
+                  onClick={() => {
+                    setStatusFilter(st);
+                    setCurrentPage(1);
+                  }}
                   className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
                     statusFilter === st
                       ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-2xs font-semibold"
@@ -308,6 +333,24 @@ export default function PurchaseOrdersPage() {
 
         {/* PO Table */}
         <div className="overflow-x-auto">
+          {error && (
+            <div className="p-6 text-center">
+              <p className="text-xs text-rose-600 dark:text-rose-400 mb-2">{error}</p>
+              <button
+                onClick={() => refetch()}
+                className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {loading && !error && (
+            <div className="py-12 flex items-center justify-center gap-2 text-slate-400 dark:text-slate-500 text-xs">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading purchase orders...</span>
+            </div>
+          )}
+          {!loading && !error && (
           <table className="w-full text-left text-xs sm:text-[13px]">
             <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <tr>
@@ -321,14 +364,18 @@ export default function PurchaseOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredOrders.length === 0 ? (
+              {paginatedOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No purchase orders found.
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((po) => (
+                paginatedOrders.map((po) => {
+                  const avatar =
+                    po.supplier.avatar || getSupplierAvatar(po.supplier.name);
+                  const bgColor = getAvatarColor(po.supplier.name);
+                  return (
                   <tr key={po.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                     {/* PO Number */}
                     <td className="py-3.5 px-6 font-mono font-bold">
@@ -344,11 +391,9 @@ export default function PurchaseOrdersPage() {
                     <td className="py-3.5 px-6">
                       <div className="flex items-center gap-2.5">
                         <div
-                          className={`h-7 w-7 rounded-full text-white text-[11px] font-bold flex items-center justify-center shrink-0 ${
-                            po.supplier.bgColor || "bg-sky-500"
-                          }`}
+                          className={`h-7 w-7 rounded-full text-white text-[11px] font-bold flex items-center justify-center shrink-0 ${bgColor}`}
                         >
-                          {po.supplier.avatar}
+                          {avatar}
                         </div>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">
                           {po.supplier.name}
@@ -358,7 +403,7 @@ export default function PurchaseOrdersPage() {
 
                     {/* Date Ordered */}
                     <td className="py-3.5 px-6 text-slate-600 dark:text-slate-400 font-medium">
-                      {po.dateOrdered}
+                      {formatDisplayDate(po.dateOrdered)}
                     </td>
 
                     {/* Expected Delivery */}
@@ -370,13 +415,13 @@ export default function PurchaseOrdersPage() {
                             : "text-slate-600 dark:text-slate-400"
                         }`}
                       >
-                        {po.expectedDelivery}
+                        {formatDisplayDate(po.expectedDelivery)}
                       </span>
                     </td>
 
                     {/* Total (ETB) */}
                     <td className="py-3.5 px-6 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
-                      {po.total}
+                      {formatTotal(po.total)}
                     </td>
 
                     {/* Status Pill Badge */}
@@ -414,15 +459,24 @@ export default function PurchaseOrdersPage() {
                       </Link>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
+          )}
         </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <div>Showing 1-{filteredOrders.length} of 142 orders</div>
+          <div>
+            {filteredOrders.length === 0
+              ? "No orders"
+              : `Showing ${(currentPage - 1) * pageSize + 1}-${Math.min(
+                  currentPage * pageSize,
+                  filteredOrders.length
+                )} of ${filteredOrders.length} orders`}
+          </div>
           <div className="flex items-center gap-1">
             <button
               disabled={currentPage === 1}
@@ -431,40 +485,26 @@ export default function PurchaseOrdersPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(
+              (page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
+                    currentPage === page
+                      ? "bg-[#0284c7] text-white"
+                      : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
+            {totalPages > 5 && <span className="px-1 text-slate-400">...</span>}
             <button
-              onClick={() => setCurrentPage(1)}
-              className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
-                currentPage === 1
-                  ? "bg-[#0284c7] text-white"
-                  : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-              }`}
-            >
-              1
-            </button>
-            <button
-              onClick={() => setCurrentPage(2)}
-              className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
-                currentPage === 2
-                  ? "bg-[#0284c7] text-white"
-                  : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-              }`}
-            >
-              2
-            </button>
-            <button
-              onClick={() => setCurrentPage(3)}
-              className={`w-7 h-7 flex items-center justify-center rounded text-xs font-semibold ${
-                currentPage === 3
-                  ? "bg-[#0284c7] text-white"
-                  : "border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-              }`}
-            >
-              3
-            </button>
-            <span className="px-1 text-slate-400">...</span>
-            <button
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-40 cursor-pointer"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

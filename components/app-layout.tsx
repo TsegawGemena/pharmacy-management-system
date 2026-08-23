@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import AuthGuard from "@/components/auth-guard";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -11,10 +12,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // If on login route, render standalone full-screen page
   if (pathname === "/login") {
-    return <div className="min-h-screen bg-white dark:bg-[#090d16] text-slate-800 dark:text-slate-100">{children}</div>;
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-white dark:bg-[#090d16] text-slate-800 dark:text-slate-100">
+          {children}
+        </div>
+      </AuthGuard>
+    );
   }
 
   return (
+    <AuthGuard>
     <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 transition-colors">
       {/* Sidebar */}
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
@@ -27,5 +35,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
     </div>
+    </AuthGuard>
   );
 }

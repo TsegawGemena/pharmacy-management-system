@@ -1,16 +1,62 @@
 "use client";
 
 import React from "react";
-import { TriangleAlert, Clock, Banknote, TrendingUp } from "lucide-react";
+import { TriangleAlert, Clock, Banknote, Loader2 } from "lucide-react";
+import { getDashboard } from "@/lib/api";
+import { useApi } from "@/lib/hooks/use-api";
+
+function StatCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs flex flex-col justify-between animate-pulse">
+      <div className="flex items-start justify-between">
+        <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700" />
+      </div>
+      <div className="mt-2.5 h-8 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+      <div className="mt-3.5 h-3 w-32 rounded bg-slate-200 dark:bg-slate-700" />
+    </div>
+  );
+}
+
+function formatNumber(value: number): string {
+  return value.toLocaleString("en-US");
+}
 
 export default function StatCards() {
+  const { data, loading, error } = useApi(getDashboard);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <StatCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/90 dark:bg-amber-950/40 p-6 text-sm text-amber-800 dark:text-amber-200">
+        <Loader2 className="h-4 w-4 shrink-0" />
+        <span>{error}</span>
+      </div>
+    );
+  }
+
+  const stats = data?.stats;
+  const totalProducts = stats?.totalProducts ?? 0;
+  const lowStockCount = stats?.lowStockCount ?? 0;
+  const expiringSoonCount = stats?.expiringSoonCount ?? 0;
+  const todaySales = stats?.todaySales ?? 0;
+
   const cards = [
     {
       title: "Total Products",
-      value: "1,248",
+      value: formatNumber(totalProducts),
       subtext: (
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          1,196 active in inventory
+          Active in inventory
         </span>
       ),
       icon: (
@@ -31,14 +77,16 @@ export default function StatCards() {
     },
     {
       title: "Low Stock",
-      value: "18",
+      value: formatNumber(lowStockCount),
       subtext: (
         <div className="flex items-center gap-1.5 text-xs">
           <span className="font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-600 dark:bg-rose-400 inline-block"></span>
-            5 critical
+            {lowStockCount > 0 ? "Needs attention" : "All stocked"}
           </span>
-          <span className="text-slate-500 dark:text-slate-400">require ordering</span>
+          {lowStockCount > 0 && (
+            <span className="text-slate-500 dark:text-slate-400">require ordering</span>
+          )}
         </div>
       ),
       icon: (
@@ -49,12 +97,12 @@ export default function StatCards() {
     },
     {
       title: "Expiring Soon",
-      value: "7",
+      value: formatNumber(expiringSoonCount),
       subtext: (
         <div className="flex items-center gap-1.5 text-xs">
           <span className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-600 dark:bg-amber-400 inline-block"></span>
-            3 within 30 days
+            {expiringSoonCount > 0 ? "Review batches" : "No upcoming expiry"}
           </span>
         </div>
       ),
@@ -68,18 +116,12 @@ export default function StatCards() {
       title: "Today's Sales",
       value: (
         <div className="flex items-baseline gap-1.5">
-          <span>24,850</span>
+          <span>{formatNumber(todaySales)}</span>
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ETB</span>
         </div>
       ),
       subtext: (
-        <div className="flex items-center gap-1.5 text-xs">
-          <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-            <TrendingUp className="h-3.5 w-3.5 inline" />
-            +8.5%
-          </span>
-          <span className="text-slate-500 dark:text-slate-400">vs yesterday</span>
-        </div>
+        <span className="text-xs text-slate-500 dark:text-slate-400">Today&apos;s revenue</span>
       ),
       icon: (
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-100/90 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
@@ -96,7 +138,6 @@ export default function StatCards() {
           key={index}
           className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs hover:shadow-xs transition-colors flex flex-col justify-between"
         >
-          {/* Card Top */}
           <div className="flex items-start justify-between">
             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
               {card.title}
@@ -104,14 +145,12 @@ export default function StatCards() {
             {card.icon}
           </div>
 
-          {/* Card Number */}
           <div className="mt-2.5">
             <div className="text-[28px] font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
               {card.value}
             </div>
           </div>
 
-          {/* Card Footer */}
           <div className="mt-3.5 pt-1">{card.subtext}</div>
         </div>
       ))}
