@@ -2,7 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getAuthToken } from "@/lib/api";
+import {
+  getAuthToken,
+  getSessionRole,
+  logout,
+} from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -19,6 +23,34 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const token = getAuthToken();
     if (!token) {
       router.replace("/login");
+      return;
+    }
+
+    const role = getSessionRole();
+    const isAdminRoute = pathname === "/admin" || pathname?.startsWith("/admin/");
+
+    if (isAdminRoute) {
+      if (role !== "Admin") {
+        if (role === "Pharmacist") {
+          router.replace("/");
+        } else {
+          logout();
+          router.replace("/login?portal=admin");
+        }
+        return;
+      }
+      setReady(true);
+      return;
+    }
+
+    // Pharmacist app routes (everything outside /admin and /login)
+    if (role !== "Pharmacist") {
+      if (role === "Admin") {
+        router.replace("/admin");
+      } else {
+        logout();
+        router.replace("/login");
+      }
       return;
     }
 

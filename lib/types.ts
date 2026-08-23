@@ -16,7 +16,7 @@ export interface PaginatedResponse<T> {
   meta?: PaginationMeta;
 }
 
-export type UserRole = "Admin" | "Pharmacist";
+export type UserRole = "Admin" | "Pharmacist" | "Cashier";
 export type UserStatus = "Active" | "Inactive";
 
 export interface User {

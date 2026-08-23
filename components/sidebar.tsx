@@ -14,7 +14,7 @@ import {
   X,
   LogOut,
 } from "lucide-react";
-import { getStoredUser, logout, logoutApi } from "@/lib/api";
+import { getSelectedRole, getStoredUser, logout, logoutApi } from "@/lib/api";
 import type { User } from "@/lib/types";
 
 interface SidebarProps {
@@ -26,9 +26,12 @@ export default function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [roleLabel, setRoleLabel] = useState("Pharmacist");
 
   useEffect(() => {
-    setUser(getStoredUser());
+    const stored = getStoredUser();
+    setUser(stored);
+    setRoleLabel(getSelectedRole() || stored?.role || "Pharmacist");
   }, [pathname]);
 
   const navigationItems = [
@@ -77,7 +80,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
               Pharmacy
             </h2>
             <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wider">
-              Clinical Management
+              Pharmacist Portal
             </p>
           </div>
         </Link>
@@ -136,7 +139,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
                 {user?.name || "Staff User"}
               </p>
               <p className="truncate text-[10.5px] text-slate-400 dark:text-slate-500">
-                {user?.role || "Staff"}
+                {roleLabel}
               </p>
             </div>
           </Link>
