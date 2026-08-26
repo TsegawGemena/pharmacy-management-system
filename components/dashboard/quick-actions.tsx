@@ -30,22 +30,22 @@ export default function QuickActions() {
           <span>+ New Sale</span>
         </Link>
 
-        {/* Action 2: + Add Product (Outline blue) */}
+        {/* Action 2: Restock (Outline blue) */}
+        <Link
+          href="/products?restock=1"
+          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white dark:bg-slate-800/80 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-[#0284c7] text-[#0284c7] dark:text-sky-400 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
+        >
+          <PackagePlus className="h-4 w-4" />
+          <span>+ Restock</span>
+        </Link>
+
+        {/* Action 3: Create New Product (Outline blue) */}
         <Link
           href="/products"
           className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white dark:bg-slate-800/80 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-[#0284c7] text-[#0284c7] dark:text-sky-400 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
         >
           <PlusCircle className="h-4 w-4" />
-          <span>+ Add Product</span>
-        </Link>
-
-        {/* Action 3: + Add Stock (Outline blue) */}
-        <Link
-          href="/inventory"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white dark:bg-slate-800/80 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-[#0284c7] text-[#0284c7] dark:text-sky-400 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
-        >
-          <PackagePlus className="h-4 w-4" />
-          <span>+ Add Stock</span>
+          <span>+ Create New Product</span>
         </Link>
 
         {/* Action 4: View Invoices (Neutral outline) */}

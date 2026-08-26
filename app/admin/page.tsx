@@ -105,6 +105,11 @@ export default function AdminDashboardPage() {
   const todaySales = dashboard?.stats?.todaySales ?? 0;
   const totalProducts = dashboard?.stats?.totalProducts ?? items.length;
   const lowStockCount = dashboard?.stats?.lowStockCount ?? alerts.length;
+  const personnel = {
+    Pharmacist: dashboard?.personnel?.Pharmacist ?? "—",
+    Cashier: dashboard?.personnel?.Cashier ?? "—",
+    Admin: dashboard?.personnel?.Admin ?? "—",
+  };
 
   const stats = [
     {
@@ -351,9 +356,9 @@ export default function AdminDashboardPage() {
           </h3>
           <ul className="space-y-3 text-xs">
             {[
-              { label: "Pharmacist", icon: Pill, value: "—" },
-              { label: "Cashier", icon: ShoppingBag, value: "—" },
-              { label: "Admin", icon: Users, value: "—" },
+              { label: "Pharmacist", icon: Pill, value: personnel.Pharmacist },
+              { label: "Cashier", icon: ShoppingBag, value: personnel.Cashier },
+              { label: "Admin", icon: Users, value: personnel.Admin },
             ].map((row) => {
               const Icon = row.icon;
               return (
@@ -370,7 +375,7 @@ export default function AdminDashboardPage() {
             })}
           </ul>
           <p className="mt-3 text-[10px] text-slate-400">
-            Counts appear when the employees API is available.
+            Live staff counts from the employees API.
           </p>
         </div>
       </div>

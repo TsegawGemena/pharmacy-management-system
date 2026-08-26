@@ -403,101 +403,6 @@
           }
         }
       },
-      "Supplier": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "SUP-001"
-          },
-          "name": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "Medications",
-              "Medical Supplies",
-              "Equipment",
-              "Diagnostics"
-            ]
-          },
-          "contact": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "phone": {
-                "type": "string"
-              }
-            }
-          },
-          "address": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 5
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "Active",
-              "Inactive"
-            ]
-          }
-        }
-      },
-      "PurchaseOrder": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "PO-2023-1045"
-          },
-          "supplier": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "avatar": {
-                "type": "string"
-              }
-            }
-          },
-          "dateOrdered": {
-            "type": "string",
-            "format": "date"
-          },
-          "expectedDelivery": {
-            "type": "string",
-            "format": "date"
-          },
-          "isDelayed": {
-            "type": "boolean"
-          },
-          "total": {
-            "type": "string",
-            "example": "45200.00"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "PENDING",
-              "SHIPPED",
-              "RECEIVED",
-              "CANCELLED"
-            ]
-          }
-        }
-      },
       "SaleCheckoutRequest": {
         "type": "object",
         "required": [
@@ -1536,449 +1441,6 @@
         }
       }
     },
-    "/suppliers": {
-      "get": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "List suppliers (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "Create supplier (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Supplier"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/suppliers/{id}": {
-      "patch": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "Update supplier (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "Deactivate supplier (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/purchase-orders": {
-      "get": {
-        "tags": [
-          "Purchase Orders"
-        ],
-        "summary": "List purchase orders (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Purchase Orders"
-        ],
-        "summary": "Create purchase order (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PurchaseOrder"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/purchase-orders/{id}": {
-      "get": {
-        "tags": [
-          "Purchase Orders"
-        ],
-        "summary": "Get PO detail (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "Purchase Orders"
-        ],
-        "summary": "Update draft PO (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/purchase-orders/{id}/submit": {
-      "post": {
-        "tags": [
-          "Purchase Orders"
-        ],
-        "summary": "submit purchase order (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/purchase-orders/{id}/receive": {
-      "post": {
-        "tags": [
-          "Purchase Orders"
-        ],
-        "summary": "receive purchase order (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/purchase-orders/{id}/cancel": {
-      "post": {
-        "tags": [
-          "Purchase Orders"
-        ],
-        "summary": "cancel purchase order (🟡 planned)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "501": {
-            "description": "Not implemented yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "message": "Not implemented yet"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
     "/pos/products": {
       "get": {
         "tags": [
@@ -2790,6 +2252,170 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/inventory/restock": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Manual restock — increase stock for an existing product (no new Product)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "productId",
+                  "quantity"
+                ],
+                "properties": {
+                  "productId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "unitPrice": {
+                    "type": "number"
+                  },
+                  "batchNo": {
+                    "type": "string"
+                  },
+                  "expiryDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "minStock": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated inventory item / batch"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "List product categories",
+        "responses": {
+          "200": {
+            "description": "Category list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Create a product category",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created category"
+          }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "delete": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Delete a category",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/adjustments/{id}": {
+      "patch": {
+        "tags": [
+          "Adjustments"
+        ],
+        "summary": "Update stock adjustment (and related product fields when productId provided)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated adjustment"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Adjustments"
+        ],
+        "summary": "Delete stock adjustment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
           }
         }
       }

@@ -89,7 +89,11 @@ function statusStyleFor(status: string): string {
 }
 
 function parseSalesReport(raw: unknown): SalesReportView {
-  const data = unwrapData<Record<string, unknown>>(raw);
+  if (raw == null) return EMPTY_SALES_REPORT;
+
+  const unwrapped = unwrapData<Record<string, unknown> | null>(raw);
+  const data =
+    unwrapped && typeof unwrapped === "object" ? unwrapped : {};
 
   const topProductsRaw = (data.topProducts ?? data.top_products) as
     | Record<string, unknown>[]

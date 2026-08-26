@@ -94,7 +94,9 @@ export default function AlertSettingsModal({
               onChange={(e) => setLowStockLeadDays(Number(e.target.value))}
               className="w-full px-3.5 py-2 text-sm font-mono border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-lg focus:outline-hidden focus:border-sky-500"
             />
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Calculates stock runout buffer against supplier delivery times.</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              Calculates stock runout buffer based on usage and lead time.
+            </p>
           </div>
 
           <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">

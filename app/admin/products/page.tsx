@@ -1,16 +1,43 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Package, Plus, Search } from "lucide-react";
+import { Package, PackagePlus, Pencil, Plus, Search } from "lucide-react";
 import AdminHeader from "@/components/admin/admin-header";
+import AddProductModal from "@/components/inventory/add-product-modal";
+import RestockModal from "@/components/inventory/restock-modal";
+import EditProductModal from "@/components/inventory/edit-product-modal";
 import { PageState } from "@/components/ui/page-state";
-import { getProducts } from "@/lib/api";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  restockInventory,
+  getCategories,
+  createCategory,
+} from "@/lib/api";
+import type { Product } from "@/lib/types";
+import type { Category } from "@/lib/api/categories";
 import { useApi } from "@/lib/hooks/use-api";
 
 export default function AdminProductsPage() {
   const { data, loading, error, refetch } = useApi(getProducts);
+  const {
+    data: categoriesData,
+    refetch: refetchCategories,
+  } = useApi(getCategories, []);
   const products = data?.data ?? [];
+  const categories = categoriesData ?? [];
   const [query, setQuery] = useState("");
+  const [isRestockOpen, setIsRestockOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [restockProductId, setRestockProductId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -23,21 +50,100 @@ export default function AdminProductsPage() {
     );
   }, [products, query]);
 
+  const categoryOptions = useMemo(() => {
+    const fromApi = categories.map((c) => c.name);
+    const fromProducts = products.map((p) => p.category).filter(Boolean);
+    return Array.from(new Set([...fromApi, ...fromProducts])).sort();
+  }, [categories, products]);
+
+  const handleAddCategory = async (name: string) => {
+    await createCategory(name);
+    await refetchCategories();
+    showToast(`Category "${name}" added`);
+  };
+
+  const handleCreateProduct = async (newProd: {
+    name: string;
+    category: string;
+    batchNo?: string;
+    stock: number;
+    unitPrice: number | string;
+    manufacturer?: string;
+  }) => {
+    const created = await createProduct({
+      name: newProd.name,
+      category: newProd.category,
+      sku: newProd.batchNo || undefined,
+      manufacturer: newProd.manufacturer || "",
+      price: Number(newProd.unitPrice).toFixed(2),
+      stock: newProd.stock,
+      status: "Active",
+    });
+    await refetch();
+    showToast(`Created ${newProd.name}`);
+    if (created?.id) {
+      setRestockProductId(created.id);
+      setIsRestockOpen(true);
+    }
+  };
+
+  const handleRestock = async (form: {
+    productId: string;
+    quantity: number;
+    unitPrice: string;
+    batchNo: string;
+    expiryDate: string;
+  }) => {
+    await restockInventory({
+      productId: form.productId,
+      quantity: form.quantity,
+      unitPrice: form.unitPrice || undefined,
+      batchNo: form.batchNo || undefined,
+      expiryDate: form.expiryDate || undefined,
+    });
+    await refetch();
+    showToast("Stock added successfully");
+  };
+
+  const handleSaveProduct = async (id: string, payload: Partial<Product>) => {
+    await updateProduct(id, payload);
+    await refetch();
+    showToast("Product updated");
+  };
+
   return (
     <div>
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 px-4 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-xl shadow-lg">
+          {toastMessage}
+        </div>
+      )}
+
       <AdminHeader
         title="Products"
         subtitle="Manage the pharmacy product catalog, categories, and pricing."
         searchPlaceholder="Search products..."
       />
 
-      <div className="flex justify-end mb-4 -mt-2">
+      <div className="flex justify-end gap-2 mb-4 -mt-2">
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0c3e66] text-white text-xs font-semibold"
+          onClick={() => setIsCreateOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold"
         >
           <Plus className="h-3.5 w-3.5" />
-          Add Product
+          Create New Product
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setRestockProductId(null);
+            setIsRestockOpen(true);
+          }}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0c3e66] text-white text-xs font-semibold"
+        >
+          <PackagePlus className="h-3.5 w-3.5" />
+          Restock
         </button>
       </div>
 
@@ -64,12 +170,13 @@ export default function AdminProductsPage() {
                   <th className="py-3.5 px-5">SKU</th>
                   <th className="py-3.5 px-5">Status</th>
                   <th className="py-3.5 px-5 text-right">Price (ETB)</th>
+                  <th className="py-3.5 px-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-slate-400">
+                    <td colSpan={6} className="py-10 text-center text-slate-400">
                       <Package className="h-5 w-5 mx-auto mb-2 opacity-50" />
                       No products found
                     </td>
@@ -94,6 +201,29 @@ export default function AdminProductsPage() {
                     <td className="py-3.5 px-5 text-right font-mono font-semibold">
                       {p.price ?? "—"}
                     </td>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setEditingProduct(p)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRestockProductId(p.id);
+                            setIsRestockOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0c3e66] text-white text-[11px] font-semibold"
+                        >
+                          <PackagePlus className="h-3 w-3" />
+                          Restock
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -101,6 +231,35 @@ export default function AdminProductsPage() {
           </div>
         </PageState>
       </div>
+
+      <RestockModal
+        isOpen={isRestockOpen}
+        onClose={() => {
+          setIsRestockOpen(false);
+          setRestockProductId(null);
+        }}
+        products={products}
+        initialProductId={restockProductId}
+        onRestock={handleRestock}
+        onCreateNewProduct={() => setIsCreateOpen(true)}
+      />
+
+      <AddProductModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onAddProduct={handleCreateProduct}
+        categories={categoryOptions}
+        onAddCategory={handleAddCategory}
+      />
+
+      <EditProductModal
+        isOpen={Boolean(editingProduct)}
+        onClose={() => setEditingProduct(null)}
+        product={editingProduct}
+        categories={categories as Category[]}
+        onSave={handleSaveProduct}
+        onAddCategory={handleAddCategory}
+      />
     </div>
   );
 }

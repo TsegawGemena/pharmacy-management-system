@@ -8,7 +8,6 @@ import {
   Package,
   Boxes,
   Users,
-  Truck,
   ShoppingCart,
   ReceiptText,
   History,
@@ -27,13 +26,12 @@ interface AdminSidebarProps {
   setMobileOpen?: (open: boolean) => void;
 }
 
-/** Customers intentionally omitted — Admin console does not include a Customers module. */
+/** Customers intentionally omitted from Admin console. */
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Products", href: "/admin/products", icon: Package },
   { name: "Inventory", href: "/admin/inventory", icon: Boxes },
   { name: "Employees", href: "/admin/employees", icon: Users },
-  { name: "Suppliers", href: "/admin/suppliers", icon: Truck },
   { name: "Point of Sale", href: "/admin/pos", icon: ShoppingCart },
   { name: "Invoices", href: "/admin/invoices", icon: ReceiptText },
   { name: "Sales History", href: "/admin/sales-history", icon: History },

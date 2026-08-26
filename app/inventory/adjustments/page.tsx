@@ -20,7 +20,7 @@ import {
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import CreateAdjustmentModal from "@/components/inventory/create-adjustment-modal";
 import { PageState } from "@/components/ui/page-state";
-import { getAdjustments, createAdjustment } from "@/lib/api";
+import { getAdjustments, createAdjustment, updateAdjustment, deleteAdjustment, updateProduct, getCategories, createCategory } from "@/lib/api";
 import type { Adjustment } from "@/lib/types";
 import { useApi } from "@/lib/hooks/use-api";
 
@@ -28,24 +28,58 @@ export default function StockAdjustmentsPage() {
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Adjustment | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useApi(() => getAdjustments(), []);
+  const { data: categoriesData, refetch: refetchCategories } = useApi(getCategories, []);
   const adjustments = data ?? [];
+  const categories = (categoriesData ?? []).map((c) => c.name);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleAddAdjustment = async (newAdj: Partial<Adjustment>) => {
+  const handleSaveAdjustment = async (payload: Partial<Adjustment>) => {
     try {
-      const created = await createAdjustment(newAdj);
+      if (payload.productId) {
+        await updateProduct(payload.productId, {
+          name: payload.productName,
+          category: payload.category,
+          sku: payload.sku,
+          manufacturer: payload.manufacturer,
+          price: payload.price,
+        });
+      }
+      if (payload.id) {
+        await updateAdjustment(payload.id, payload);
+        showToast("Adjustment updated");
+      } else {
+        const created = await createAdjustment(payload);
+        showToast(`Created stock adjustment ${created.id}`);
+      }
       await refetch();
-      showToast(`Created stock adjustment ${created.id}`);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create adjustment");
+      showToast(err instanceof Error ? err.message : "Failed to save adjustment");
+      throw err;
+    }
+  };
+
+  const handleAddCategory = async (name: string) => {
+    await createCategory(name);
+    await refetchCategories();
+    showToast(`Category "${name}" added`);
+  };
+
+  const handleDeleteAdjustment = async (id: string) => {
+    try {
+      await deleteAdjustment(id);
+      await refetch();
+      showToast("Adjustment deleted");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to delete adjustment");
     }
   };
 
@@ -117,7 +151,10 @@ export default function StockAdjustmentsPage() {
           </button>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setEditing(null);
+              setIsModalOpen(true);
+            }}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer"
           >
             <Plus className="h-4 w-4" />
@@ -208,7 +245,7 @@ export default function StockAdjustmentsPage() {
                 <option value="Inventory Count">Inventory Count</option>
                 <option value="Damaged">Damaged</option>
                 <option value="Theft / Lost">Theft / Lost</option>
-                <option value="Return to Supplier">Return to Supplier</option>
+                <option value="Write-off">Write-off</option>
               </select>
               <FilterIcon className="absolute left-2.5 top-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             </div>
@@ -319,9 +356,9 @@ export default function StockAdjustmentsPage() {
                           Theft / Lost
                         </span>
                       )}
-                      {adj.type === "Return to Supplier" && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
-                          Return to Supplier
+                      {adj.type === "Write-off" && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          Write-off
                         </span>
                       )}
                     </td>
@@ -358,10 +395,12 @@ export default function StockAdjustmentsPage() {
                     {/* Actions */}
                     <td className="py-3.5 px-4 text-right">
                       <button
-                        onClick={() =>
-                          showToast(`Viewing details for adjustment ${adj.id}`)
-                        }
+                        onClick={() => {
+                          setEditing(adj);
+                          setIsModalOpen(true);
+                        }}
                         className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        title="Edit adjustment"
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
@@ -375,11 +414,17 @@ export default function StockAdjustmentsPage() {
         </PageState>
       </div>
 
-      {/* Create Adjustment Modal */}
       <CreateAdjustmentModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAddAdjustment={handleAddAdjustment}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditing(null);
+        }}
+        onSave={handleSaveAdjustment}
+        onDelete={handleDeleteAdjustment}
+        initial={editing}
+        categories={categories}
+        onAddCategory={handleAddCategory}
       />
     </div>
   );

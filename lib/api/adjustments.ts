@@ -18,3 +18,25 @@ export async function createAdjustment(
   }
   return response as Adjustment;
 }
+
+export async function updateAdjustment(
+  id: string,
+  adjustment: Partial<Adjustment>
+): Promise<Adjustment> {
+  const response = await apiFetch<unknown>(`/adjustments/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(adjustment),
+  });
+  if (response && typeof response === "object" && "data" in response) {
+    return (response as { data: Adjustment }).data;
+  }
+  return response as Adjustment;
+}
+
+export async function deleteAdjustment(
+  id: string
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/adjustments/${id}`, {
+    method: "DELETE",
+  });
+}

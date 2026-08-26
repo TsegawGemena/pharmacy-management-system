@@ -31,7 +31,6 @@ import { useApi, useMutation } from "@/lib/hooks/use-api";
 interface StockAlertItem {
   id: string;
   name: string;
-  supplier: string;
   sku: string;
   category: string;
   status: "Critical" | "Low Stock";
@@ -46,7 +45,6 @@ function mapToStockAlert(item: InventoryItem): StockAlertItem {
   return {
     id: item.id,
     name: item.name,
-    supplier: "—",
     sku: item.batchNo,
     category: item.category,
     status: isCritical ? "Critical" : "Low Stock",
@@ -94,20 +92,19 @@ export default function LowStockAlertsPage() {
     );
   };
 
-  const handleCreateBulkPO = () => {
+  const handleCreateBulkRestock = () => {
     if (selectedIds.length === 0) {
-      showToast("Please select at least one item to create bulk PO");
+      showToast("Please select at least one item to restock");
       return;
     }
-    showToast(`Generating bulk PO for ${selectedIds.length} items...`);
-    setTimeout(() => {
-      router.push("/inventory/purchase-orders/new");
-    }, 800);
+    const firstId = selectedIds[0];
+    router.push(`/products?restock=1&productId=${encodeURIComponent(firstId)}`);
   };
 
   const handleRestockSingle = (item: StockAlertItem) => {
-    showToast(`Initiating Purchase Order for ${item.name}`);
-    router.push("/inventory/purchase-orders/new");
+    router.push(
+      `/products?restock=1&productId=${encodeURIComponent(item.id)}`
+    );
   };
 
   const handleStartEditThreshold = (item: StockAlertItem) => {
@@ -171,7 +168,7 @@ export default function LowStockAlertsPage() {
             Low Stock Alerts
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage inventory thresholds and initiate purchase orders.
+            Manage inventory thresholds and restock medicines manually.
           </p>
         </div>
 
@@ -185,14 +182,14 @@ export default function LowStockAlertsPage() {
           </button>
 
           <button
-            onClick={handleCreateBulkPO}
+            onClick={handleCreateBulkRestock}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#006699] hover:bg-[#005580] rounded-lg transition-colors shadow-xs cursor-pointer"
           >
             <ShoppingCart className="h-4 w-4" />
             <span>
               {selectedIds.length > 0
-                ? `Create Bulk PO (${selectedIds.length})`
-                : "Create Bulk PO"}
+                ? `Restock Selected (${selectedIds.length})`
+                : "Restock"}
             </span>
           </button>
         </div>
@@ -252,10 +249,10 @@ export default function LowStockAlertsPage() {
             {alerts.length}
           </div>
           <Link
-            href="/inventory/purchase-orders"
+            href="/products?restock=1"
             className="inline-flex items-center gap-1 text-xs text-[#0284c7] dark:text-sky-400 font-semibold hover:underline mt-1"
           >
-            <span>View active POs</span>
+            <span>Go to Restock</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -372,7 +369,7 @@ export default function LowStockAlertsPage() {
                               {item.name}
                             </div>
                             <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                              Supplier: {item.supplier}
+                              Batch: {item.sku || "—"}
                             </div>
                           </div>
                         </div>

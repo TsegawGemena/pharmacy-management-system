@@ -75,15 +75,19 @@ export type AdjustmentType =
   | "Inventory Count"
   | "Damaged"
   | "Theft / Lost"
-  | "Return to Supplier";
+  | "Write-off";
 
 export type AdjustmentStatus = "Completed" | "Pending Review";
 
 export interface Adjustment {
   id: string;
   date: string;
+  productId?: string;
   productName: string;
   sku: string;
+  category?: string;
+  manufacturer?: string;
+  price?: string;
   type: AdjustmentType;
   qtyChange: number;
   adjustedBy: string;
@@ -91,40 +95,9 @@ export interface Adjustment {
   reason?: string;
 }
 
-export interface SupplierContact {
-  name?: string;
-  email?: string;
-  phone?: string;
-}
-
-export interface Supplier {
+export interface ProductCategory {
   id: string;
   name: string;
-  category: "Medications" | "Medical Supplies" | "Equipment" | "Diagnostics" | string;
-  contact?: SupplierContact;
-  address?: string;
-  rating?: number;
-  status?: "Active" | "Inactive";
-}
-
-export type PurchaseOrderStatus =
-  | "DRAFT"
-  | "PENDING"
-  | "SHIPPED"
-  | "RECEIVED"
-  | "CANCELLED";
-
-export interface PurchaseOrder {
-  id: string;
-  supplier: {
-    name: string;
-    avatar?: string;
-  };
-  dateOrdered: string;
-  expectedDelivery: string;
-  isDelayed?: boolean;
-  total: string;
-  status: PurchaseOrderStatus;
 }
 
 export interface PosProduct {
@@ -184,6 +157,11 @@ export interface DashboardStats {
 
 export interface Dashboard {
   stats: DashboardStats;
+  personnel?: {
+    Admin?: number;
+    Pharmacist?: number;
+    Cashier?: number;
+  };
   salesOverview?: Record<string, unknown>;
   recentSales?: Record<string, unknown>[];
   expiryAlerts?: Record<string, unknown>[];

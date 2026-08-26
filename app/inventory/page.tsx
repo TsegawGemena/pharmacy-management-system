@@ -14,9 +14,9 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
-import AddProductModal from "@/components/inventory/add-product-modal";
+import RestockModal from "@/components/inventory/restock-modal";
 import { PageState } from "@/components/ui/page-state";
-import { getInventory, createInventoryItem } from "@/lib/api";
+import { getInventory, getProducts, restockInventory } from "@/lib/api";
 import type { InventoryItem } from "@/lib/types";
 import { useApi } from "@/lib/hooks/use-api";
 
@@ -26,12 +26,14 @@ export default function InventoryPage() {
   const [stockStatus, setStockStatus] = useState<"all" | "in_stock" | "low_stock" | "out_of_stock">("all");
   const [expiryStatus, setExpiryStatus] = useState("Any Date");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isRestockOpen, setIsRestockOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useApi(() => getInventory(), []);
+  const { data: productsResult } = useApi(() => getProducts({ limit: 200 }), []);
   const items = data ?? [];
+  const products = productsResult?.data ?? [];
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -50,32 +52,26 @@ export default function InventoryPage() {
     }
   };
 
-  const handleAddProduct = async (newProd: {
-    id?: string;
-    name: string;
-    category: string;
-    batchNo: string;
-    stock: number;
-    minStock: number;
-    expiryDate: string;
+  const handleRestock = async (form: {
+    productId: string;
+    quantity: number;
     unitPrice: string;
+    batchNo: string;
+    expiryDate: string;
   }) => {
     try {
-      await createInventoryItem({
-        name: newProd.name,
-        category: newProd.category,
-        batchNo: newProd.batchNo,
-        stock: newProd.stock,
-        minStock: newProd.minStock,
-        maxStock: Math.max(newProd.stock * 1.5, newProd.minStock * 2),
-        expiryDate: newProd.expiryDate,
-        isExpiringSoon: false,
-        unitPrice: newProd.unitPrice,
+      await restockInventory({
+        productId: form.productId,
+        quantity: form.quantity,
+        unitPrice: form.unitPrice || undefined,
+        batchNo: form.batchNo || undefined,
+        expiryDate: form.expiryDate || undefined,
       });
       await refetch();
-      showToast(`Added "${newProd.name}" to inventory`);
+      showToast("Stock added successfully");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to add product");
+      showToast(err instanceof Error ? err.message : "Failed to restock");
+      throw err;
     }
   };
 
@@ -167,11 +163,11 @@ export default function InventoryPage() {
           </p>
         </div>
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setIsRestockOpen(true)}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#006699] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#005580] transition-colors shadow-xs cursor-pointer"
         >
           <Plus className="h-4 w-4" />
-          <span>Add New Product</span>
+          <span>Restock</span>
         </button>
       </div>
 
@@ -512,11 +508,14 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {/* Add Product Modal */}
-      <AddProductModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAddProduct={handleAddProduct}
+      <RestockModal
+        isOpen={isRestockOpen}
+        onClose={() => setIsRestockOpen(false)}
+        products={products}
+        onRestock={handleRestock}
+        onCreateNewProduct={() => {
+          window.location.href = "/products";
+        }}
       />
     </div>
   );
