@@ -32,8 +32,24 @@ export async function getProduct(id: string): Promise<Product> {
   return response as Product;
 }
 
+export interface CreateProductPayload {
+  name: string;
+  category: string;
+  sku?: string;
+  status?: "Active" | "Inactive";
+  quantity?: number;
+  stock?: number;
+  batchNo?: string;
+  expiryDate?: string;
+  purchasePrice: number | string;
+  sellingPrice: number | string;
+  price?: number | string;
+  priceValidFrom: string;
+  priceValidUntil?: string | null;
+}
+
 export async function createProduct(
-  product: Partial<Product>
+  product: CreateProductPayload | Partial<Product>
 ): Promise<Product> {
   const response = await apiFetch<unknown>("/products", {
     method: "POST",

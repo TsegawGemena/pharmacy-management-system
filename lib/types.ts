@@ -51,8 +51,8 @@ export interface Product {
   name: string;
   category: string;
   sku: string;
-  manufacturer: string;
   price: string;
+  sellingPrice?: string;
   stock: number;
   status: ProductStatus;
 }
@@ -68,6 +68,10 @@ export interface InventoryItem {
   expiryDate: string;
   isExpiringSoon?: boolean;
   unitPrice: string;
+  purchasePrice?: string;
+  sellingPrice?: string;
+  priceValidFrom?: string;
+  priceValidUntil?: string | null;
 }
 
 export type AdjustmentType =
@@ -86,7 +90,6 @@ export interface Adjustment {
   productName: string;
   sku: string;
   category?: string;
-  manufacturer?: string;
   price?: string;
   type: AdjustmentType;
   qtyChange: number;

@@ -39,13 +39,13 @@ export default function QuickActions() {
           <span>+ Restock</span>
         </Link>
 
-        {/* Action 3: Create New Product (Outline blue) */}
+        {/* Action 3: Add New Product (Outline blue) */}
         <Link
           href="/products"
           className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white dark:bg-slate-800/80 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-[#0284c7] text-[#0284c7] dark:text-sky-400 text-xs sm:text-sm font-semibold transition-all duration-150 shadow-2xs active:scale-[0.99]"
         >
           <PlusCircle className="h-4 w-4" />
-          <span>+ Create New Product</span>
+          <span>+ Add New Product</span>
         </Link>
 
         {/* Action 4: View Invoices (Neutral outline) */}

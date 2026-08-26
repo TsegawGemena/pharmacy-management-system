@@ -49,7 +49,6 @@ export default function StockAdjustmentsPage() {
           name: payload.productName,
           category: payload.category,
           sku: payload.sku,
-          manufacturer: payload.manufacturer,
           price: payload.price,
         });
       }

@@ -84,27 +84,34 @@ function ProductManagementPage() {
   const handleCreateProduct = async (newProd: {
     name: string;
     category: string;
+    sku?: string;
+    status: "Active" | "Inactive";
+    quantity: number;
     batchNo?: string;
-    stock: number;
-    unitPrice: number | string;
-    manufacturer?: string;
+    expiryDate: string;
+    purchasePrice: number | string;
+    sellingPrice: number | string;
+    priceValidFrom: string;
+    priceValidUntil?: string;
   }) => {
     try {
-      const created = await createProduct({
+      await createProduct({
         name: newProd.name,
         category: newProd.category,
-        sku: newProd.batchNo || undefined,
-        manufacturer: newProd.manufacturer || "",
-        price: Number(newProd.unitPrice).toFixed(2),
-        stock: newProd.stock,
-        status: "Active",
+        sku: newProd.sku,
+        status: newProd.status,
+        quantity: newProd.quantity,
+        stock: newProd.quantity,
+        batchNo: newProd.batchNo,
+        expiryDate: newProd.expiryDate,
+        purchasePrice: newProd.purchasePrice,
+        sellingPrice: newProd.sellingPrice,
+        price: newProd.sellingPrice,
+        priceValidFrom: newProd.priceValidFrom,
+        priceValidUntil: newProd.priceValidUntil,
       });
       await refetch();
       showToast(`Created ${newProd.name}`);
-      if (created?.id) {
-        setRestockProductId(created.id);
-        setIsRestockOpen(true);
-      }
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to create product");
       throw err;
@@ -181,7 +188,7 @@ function ProductManagementPage() {
             className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-xs sm:text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            <span>Create New Product</span>
+            <span>Add New Product</span>
           </button>
           <button
             type="button"
@@ -306,8 +313,7 @@ function ProductManagementPage() {
                   <th className="py-3.5 px-6">Name</th>
                   <th className="py-3.5 px-6">Category</th>
                   <th className="py-3.5 px-5 font-mono">SKU/ID</th>
-                  <th className="py-3.5 px-5">Manufacturer</th>
-                  <th className="py-3.5 px-5 text-right font-mono">Price (ETB)</th>
+                  <th className="py-3.5 px-5 text-right font-mono">Selling Price (ETB)</th>
                   <th className="py-3.5 px-6 text-center">Stock</th>
                   <th className="py-3.5 px-6">Status</th>
                   <th className="py-3.5 px-5 text-right">Actions</th>
@@ -316,7 +322,7 @@ function ProductManagementPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400 text-xs">
+                    <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
                       No products found. Create a new medicine or clear filters.
                     </td>
                   </tr>
@@ -328,7 +334,6 @@ function ProductManagementPage() {
                       </td>
                       <td className="py-3.5 px-6 text-slate-600">{p.category || "—"}</td>
                       <td className="py-3.5 px-5 font-mono text-slate-500">{p.sku || "—"}</td>
-                      <td className="py-3.5 px-5 text-slate-700">{p.manufacturer || "—"}</td>
                       <td className="py-3.5 px-5 text-right font-mono font-bold">{p.price}</td>
                       <td className="py-3.5 px-6 text-center">
                         {p.stock === 0 ? (

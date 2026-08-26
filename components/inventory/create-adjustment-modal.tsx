@@ -9,7 +9,6 @@ const EMPTY_FORM = {
   productName: "",
   sku: "",
   category: "",
-  manufacturer: "",
   price: "",
   type: "Expired" as AdjustmentType,
   qtyChange: -1,
@@ -49,7 +48,6 @@ export default function CreateAdjustmentModal({
         productName: initial.productName || "",
         sku: initial.sku || "",
         category: initial.category || "",
-        manufacturer: initial.manufacturer || "",
         price: initial.price || "",
         type: initial.type || "Expired",
         qtyChange: initial.qtyChange ?? -1,
@@ -79,7 +77,6 @@ export default function CreateAdjustmentModal({
         productName: formData.productName.trim(),
         sku: formData.sku.trim(),
         category: formData.category.trim() || undefined,
-        manufacturer: formData.manufacturer.trim() || undefined,
         price: formData.price.trim() || undefined,
         type: formData.type,
         qtyChange: formData.qtyChange,
@@ -210,33 +207,18 @@ export default function CreateAdjustmentModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                Manufacturer
-              </label>
-              <input
-                type="text"
-                value={formData.manufacturer}
-                onChange={(e) =>
-                  setFormData({ ...formData, manufacturer: e.target.value })
-                }
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                Selling price (ETB)
-              </label>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+              Selling price (ETB)
+            </label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              className="w-full px-3 py-2 text-sm font-mono border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

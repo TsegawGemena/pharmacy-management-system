@@ -254,7 +254,7 @@ export default function RestockModal({
               className="text-xs font-semibold text-[#006699] dark:text-sky-400 hover:underline inline-flex items-center gap-1"
             >
               <Plus className="h-3.5 w-3.5" />
-              Medicine not listed? Create new product
+              Medicine not listed? Add new product
             </button>
           )}
 

@@ -65,26 +65,33 @@ export default function AdminProductsPage() {
   const handleCreateProduct = async (newProd: {
     name: string;
     category: string;
+    sku?: string;
+    status: "Active" | "Inactive";
+    quantity: number;
     batchNo?: string;
-    stock: number;
-    unitPrice: number | string;
-    manufacturer?: string;
+    expiryDate: string;
+    purchasePrice: number | string;
+    sellingPrice: number | string;
+    priceValidFrom: string;
+    priceValidUntil?: string;
   }) => {
-    const created = await createProduct({
+    await createProduct({
       name: newProd.name,
       category: newProd.category,
-      sku: newProd.batchNo || undefined,
-      manufacturer: newProd.manufacturer || "",
-      price: Number(newProd.unitPrice).toFixed(2),
-      stock: newProd.stock,
-      status: "Active",
+      sku: newProd.sku,
+      status: newProd.status,
+      quantity: newProd.quantity,
+      stock: newProd.quantity,
+      batchNo: newProd.batchNo,
+      expiryDate: newProd.expiryDate,
+      purchasePrice: newProd.purchasePrice,
+      sellingPrice: newProd.sellingPrice,
+      price: newProd.sellingPrice,
+      priceValidFrom: newProd.priceValidFrom,
+      priceValidUntil: newProd.priceValidUntil,
     });
     await refetch();
     showToast(`Created ${newProd.name}`);
-    if (created?.id) {
-      setRestockProductId(created.id);
-      setIsRestockOpen(true);
-    }
   };
 
   const handleRestock = async (form: {
@@ -132,7 +139,7 @@ export default function AdminProductsPage() {
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold"
         >
           <Plus className="h-3.5 w-3.5" />
-          Create New Product
+          Add New Product
         </button>
         <button
           type="button"
