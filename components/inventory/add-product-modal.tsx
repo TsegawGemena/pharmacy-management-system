@@ -6,15 +6,11 @@ import { X, Plus, PackageCheck, CheckCircle2 } from "lucide-react";
 export interface NewProductForm {
   name: string;
   category: string;
-  sku?: string;
   status: "Active" | "Inactive";
   quantity: number;
-  batchNo?: string;
   expiryDate: string;
   purchasePrice: number | string;
   sellingPrice: number | string;
-  priceValidFrom: string;
-  priceValidUntil?: string;
 }
 
 interface AddProductModalProps {
@@ -32,10 +28,6 @@ const FALLBACK_CATEGORIES = [
   "Vitamins",
 ];
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default function AddProductModal({
   isOpen,
   onClose,
@@ -46,15 +38,11 @@ export default function AddProductModal({
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    sku: "",
     status: "Active" as "Active" | "Inactive",
     quantity: 0,
-    batchNo: "",
     expiryDate: "",
     purchasePrice: "",
     sellingPrice: "",
-    priceValidFrom: todayISO(),
-    priceValidUntil: "",
   });
   const [localCategories, setLocalCategories] = useState<string[]>([]);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
@@ -78,15 +66,11 @@ export default function AddProductModal({
     setFormData({
       name: "",
       category: "",
-      sku: "",
       status: "Active",
       quantity: 0,
-      batchNo: "",
       expiryDate: "",
       purchasePrice: "",
       sellingPrice: "",
-      priceValidFrom: todayISO(),
-      priceValidUntil: "",
     });
     setLocalCategories([]);
     setShowCreateCategory(false);
@@ -166,10 +150,6 @@ export default function AddProductModal({
       setFormError("Purchase Price and Selling Price are required.");
       return;
     }
-    if (!formData.priceValidFrom) {
-      setFormError("Price Valid From is required.");
-      return;
-    }
 
     const purchase = Number(formData.purchasePrice);
     const selling = Number(formData.sellingPrice);
@@ -187,15 +167,11 @@ export default function AddProductModal({
       await onAddProduct({
         name: formData.name.trim(),
         category: formData.category.trim(),
-        sku: formData.sku.trim() || undefined,
         status: formData.status,
         quantity: Number(formData.quantity) || 0,
-        batchNo: formData.batchNo.trim() || undefined,
         expiryDate: formData.expiryDate,
         purchasePrice: purchase.toFixed(2),
         sellingPrice: selling.toFixed(2),
-        priceValidFrom: formData.priceValidFrom,
-        priceValidUntil: formData.priceValidUntil || undefined,
       });
       onClose();
     } catch (err) {
@@ -245,7 +221,6 @@ export default function AddProductModal({
             </p>
           )}
 
-          {/* Product Information */}
           <section className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Product Information
@@ -375,38 +350,24 @@ export default function AddProductModal({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelClass}>SKU</label>
-                <input
-                  type="text"
-                  value={formData.sku}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sku: e.target.value })
-                  }
-                  className={`${fieldClass} font-mono`}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as "Active" | "Inactive",
-                    })
-                  }
-                  className={fieldClass}
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
+            <div>
+              <label className={labelClass}>Status</label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as "Active" | "Inactive",
+                  })
+                }
+                className={fieldClass}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
             </div>
           </section>
 
-          {/* Initial Stock */}
           <section className="space-y-3 pt-1 border-t border-slate-100 dark:border-slate-800">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 pt-3">
               Initial Stock
@@ -429,32 +390,20 @@ export default function AddProductModal({
                 />
               </div>
               <div>
-                <label className={labelClass}>Batch Number</label>
+                <label className={labelClass}>Expiry Date *</label>
                 <input
-                  type="text"
-                  value={formData.batchNo}
+                  type="date"
+                  required
+                  value={formData.expiryDate}
                   onChange={(e) =>
-                    setFormData({ ...formData, batchNo: e.target.value })
+                    setFormData({ ...formData, expiryDate: e.target.value })
                   }
-                  className={`${fieldClass} font-mono`}
+                  className={fieldClass}
                 />
               </div>
             </div>
-            <div>
-              <label className={labelClass}>Expiry Date *</label>
-              <input
-                type="date"
-                required
-                value={formData.expiryDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, expiryDate: e.target.value })
-                }
-                className={fieldClass}
-              />
-            </div>
           </section>
 
-          {/* Pricing */}
           <section className="space-y-3 pt-1 border-t border-slate-100 dark:border-slate-800">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 pt-3">
               Pricing
@@ -494,37 +443,6 @@ export default function AddProductModal({
                     })
                   }
                   className={`${fieldClass} font-mono`}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelClass}>Price Valid From *</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.priceValidFrom}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      priceValidFrom: e.target.value,
-                    })
-                  }
-                  className={fieldClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Price Valid Until</label>
-                <input
-                  type="date"
-                  value={formData.priceValidUntil}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      priceValidUntil: e.target.value,
-                    })
-                  }
-                  className={fieldClass}
                 />
               </div>
             </div>

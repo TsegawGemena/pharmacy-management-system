@@ -14,6 +14,7 @@ interface EditProductModalProps {
   onAddCategory?: (name: string) => Promise<void> | void;
 }
 
+/** Edit only catalog basics — stock, batch, SKU, and purchase price are not editable here. */
 export default function EditProductModal({
   isOpen,
   onClose,
@@ -24,8 +25,6 @@ export default function EditProductModal({
 }: EditProductModalProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
-  const [sku, setSku] = useState("");
-  const [price, setPrice] = useState("");
   const [status, setStatus] = useState<ProductStatus>("Active");
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -39,8 +38,6 @@ export default function EditProductModal({
     if (!isOpen || !product) return;
     setName(product.name || "");
     setCategory(product.category || "");
-    setSku(product.sku || "");
-    setPrice(String(product.price ?? ""));
     setStatus((product.status as ProductStatus) || "Active");
     setShowCreateCategory(false);
     setNewCategoryName("");
@@ -65,9 +62,7 @@ export default function EditProductModal({
       setCategoryError("Category name is required.");
       return;
     }
-    if (
-      categoryOptions.some((c) => c.toLowerCase() === value.toLowerCase())
-    ) {
+    if (categoryOptions.some((c) => c.toLowerCase() === value.toLowerCase())) {
       setCategoryError(`Category "${value}" already exists.`);
       return;
     }
@@ -95,14 +90,16 @@ export default function EditProductModal({
       setError("Medicine name is required.");
       return;
     }
+    if (!category.trim()) {
+      setError("Category is required.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       await onSave(product.id, {
         name: name.trim(),
         category: category.trim(),
-        sku: sku.trim(),
-        price: price.trim(),
         status,
       });
       onClose();
@@ -115,7 +112,7 @@ export default function EditProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-sky-100 dark:bg-sky-950/60 text-[#006699] dark:text-sky-400 rounded-lg">
@@ -126,7 +123,7 @@ export default function EditProductModal({
                 Edit Product
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Update medicine catalog details
+                Fix name, category, or status only
               </p>
             </div>
           </div>
@@ -229,32 +226,6 @@ export default function EditProductModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                SKU
-              </label>
-              <input
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                Selling Price (ETB)
-              </label>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
-              />
-            </div>
-          </div>
-
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
               Status
@@ -268,6 +239,11 @@ export default function EditProductModal({
               <option value="Inactive">Inactive</option>
             </select>
           </div>
+
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-lg px-3 py-2">
+            Stock quantity, prices, batch, and expiry are set when adding or
+            restocking — not when editing the product.
+          </p>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button

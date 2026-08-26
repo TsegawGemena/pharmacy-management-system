@@ -134,7 +134,12 @@ export function getRoleHomePath(role?: AppRole | null): string {
   const r = role ?? getSessionRole();
   if (r === "Admin") return "/admin";
   if (r === "Pharmacist") return "/";
+  if (r === "Cashier") return "/cashier";
   return "/login";
+}
+
+export function isCashierSession(): boolean {
+  return getSessionRole() === "Cashier";
 }
 
 export function logout() {

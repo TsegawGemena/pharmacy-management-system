@@ -10,13 +10,12 @@ import {
   PackagePlus,
   Search,
   CheckCircle2,
-  Pencil,
   Plus,
   Loader2,
 } from "lucide-react";
 import AddProductModal from "@/components/inventory/add-product-modal";
 import RestockModal from "@/components/inventory/restock-modal";
-import EditProductModal from "@/components/inventory/edit-product-modal";
+import type { EditAndRestockFormData } from "@/components/inventory/restock-modal";
 import { PageState } from "@/components/ui/page-state";
 import {
   getProducts,
@@ -27,7 +26,6 @@ import {
   createCategory,
 } from "@/lib/api";
 import type { Product } from "@/lib/types";
-import type { Category } from "@/lib/api/categories";
 import { useApi } from "@/lib/hooks/use-api";
 
 function ProductManagementPage() {
@@ -37,7 +35,6 @@ function ProductManagementPage() {
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [isRestockOpen, setIsRestockOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [restockProductId, setRestockProductId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -84,31 +81,23 @@ function ProductManagementPage() {
   const handleCreateProduct = async (newProd: {
     name: string;
     category: string;
-    sku?: string;
     status: "Active" | "Inactive";
     quantity: number;
-    batchNo?: string;
     expiryDate: string;
     purchasePrice: number | string;
     sellingPrice: number | string;
-    priceValidFrom: string;
-    priceValidUntil?: string;
   }) => {
     try {
       await createProduct({
         name: newProd.name,
         category: newProd.category,
-        sku: newProd.sku,
         status: newProd.status,
         quantity: newProd.quantity,
         stock: newProd.quantity,
-        batchNo: newProd.batchNo,
         expiryDate: newProd.expiryDate,
         purchasePrice: newProd.purchasePrice,
         sellingPrice: newProd.sellingPrice,
         price: newProd.sellingPrice,
-        priceValidFrom: newProd.priceValidFrom,
-        priceValidUntil: newProd.priceValidUntil,
       });
       await refetch();
       showToast(`Created ${newProd.name}`);
@@ -118,28 +107,28 @@ function ProductManagementPage() {
     }
   };
 
-  const handleRestock = async (form: {
-    productId: string;
-    quantity: number;
-    unitPrice: string;
-    batchNo: string;
-    expiryDate: string;
-  }) => {
-    await restockInventory({
-      productId: form.productId,
-      quantity: form.quantity,
-      unitPrice: form.unitPrice || undefined,
-      batchNo: form.batchNo || undefined,
-      expiryDate: form.expiryDate || undefined,
+  const handleEditAndRestock = async (form: EditAndRestockFormData) => {
+    await updateProduct(form.productId, {
+      name: form.name,
+      category: form.category,
+      status: form.status,
+      price: form.sellingPrice,
     });
-    await refetch();
-    showToast("Stock added successfully");
-  };
 
-  const handleSaveProduct = async (id: string, payload: Partial<Product>) => {
-    await updateProduct(id, payload);
+    if (form.quantity > 0) {
+      await restockInventory({
+        productId: form.productId,
+        quantity: form.quantity,
+        purchasePrice: form.purchasePrice || undefined,
+        sellingPrice: form.sellingPrice || undefined,
+        unitPrice: form.sellingPrice || undefined,
+        expiryDate: form.expiryDate || undefined,
+      });
+      showToast("Product updated and stock added");
+    } else {
+      showToast("Product updated");
+    }
     await refetch();
-    showToast("Product updated");
   };
 
   const handleAddCategory = async (name: string) => {
@@ -199,7 +188,7 @@ function ProductManagementPage() {
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#006699] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#005580] transition-colors shadow-xs"
           >
             <PackagePlus className="h-4 w-4" />
-            <span>Restock</span>
+            <span>Edit & Restock</span>
           </button>
         </div>
       </div>
@@ -272,7 +261,7 @@ function ProductManagementPage() {
             <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search product name or SKU..."
+              placeholder="Search product name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
@@ -312,7 +301,6 @@ function ProductManagementPage() {
                 <tr>
                   <th className="py-3.5 px-6">Name</th>
                   <th className="py-3.5 px-6">Category</th>
-                  <th className="py-3.5 px-5 font-mono">SKU/ID</th>
                   <th className="py-3.5 px-5 text-right font-mono">Selling Price (ETB)</th>
                   <th className="py-3.5 px-6 text-center">Stock</th>
                   <th className="py-3.5 px-6">Status</th>
@@ -322,7 +310,7 @@ function ProductManagementPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                    <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
                       No products found. Create a new medicine or clear filters.
                     </td>
                   </tr>
@@ -333,7 +321,6 @@ function ProductManagementPage() {
                         {p.name}
                       </td>
                       <td className="py-3.5 px-6 text-slate-600">{p.category || "—"}</td>
-                      <td className="py-3.5 px-5 font-mono text-slate-500">{p.sku || "—"}</td>
                       <td className="py-3.5 px-5 text-right font-mono font-bold">{p.price}</td>
                       <td className="py-3.5 px-6 text-center">
                         {p.stock === 0 ? (
@@ -364,27 +351,17 @@ function ProductManagementPage() {
                         )}
                       </td>
                       <td className="py-3.5 px-5 text-right">
-                        <div className="inline-flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setEditingProduct(p)}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-sky-700"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRestockProductId(p.id);
-                              setIsRestockOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline"
-                          >
-                            <PackagePlus className="h-3.5 w-3.5" />
-                            Restock
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRestockProductId(p.id);
+                            setIsRestockOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline"
+                        >
+                          <PackagePlus className="h-3.5 w-3.5" />
+                          Edit & Restock
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -423,8 +400,10 @@ function ProductManagementPage() {
           setRestockProductId(null);
         }}
         products={products}
+        categories={categoryOptions}
         initialProductId={restockProductId}
-        onRestock={handleRestock}
+        onSave={handleEditAndRestock}
+        onAddCategory={handleAddCategory}
         onCreateNewProduct={() => setIsCreateOpen(true)}
       />
 
@@ -433,15 +412,6 @@ function ProductManagementPage() {
         onClose={() => setIsCreateOpen(false)}
         onAddProduct={handleCreateProduct}
         categories={categoryOptions}
-        onAddCategory={handleAddCategory}
-      />
-
-      <EditProductModal
-        isOpen={Boolean(editingProduct)}
-        onClose={() => setEditingProduct(null)}
-        product={editingProduct}
-        categories={categories as Category[]}
-        onSave={handleSaveProduct}
         onAddCategory={handleAddCategory}
       />
     </div>

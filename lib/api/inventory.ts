@@ -5,6 +5,8 @@ export interface RestockPayload {
   productId: string;
   quantity: number;
   unitPrice?: number | string;
+  purchasePrice?: number | string;
+  sellingPrice?: number | string;
   batchNo?: string;
   expiryDate?: string;
   minStock?: number;

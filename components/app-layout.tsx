@@ -26,6 +26,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return <AuthGuard>{children}</AuthGuard>;
   }
 
+  // Cashier portal uses its own layout under app/cashier/layout.tsx
+  if (pathname === "/cashier" || pathname?.startsWith("/cashier/")) {
+    return <AuthGuard>{children}</AuthGuard>;
+  }
+
   // Pharmacist portal shell
   return (
     <AuthGuard>

@@ -27,13 +27,16 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     const role = getSessionRole();
-    const isAdminRoute = pathname === "/admin" || pathname?.startsWith("/admin/");
+    const isAdminRoute =
+      pathname === "/admin" || pathname?.startsWith("/admin/");
+    const isCashierRoute =
+      pathname === "/cashier" || pathname?.startsWith("/cashier/");
 
     if (isAdminRoute) {
       if (role !== "Admin") {
-        if (role === "Pharmacist") {
-          router.replace("/");
-        } else {
+        if (role === "Pharmacist") router.replace("/");
+        else if (role === "Cashier") router.replace("/cashier");
+        else {
           logout();
           router.replace("/login?portal=admin");
         }
@@ -43,11 +46,25 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Pharmacist app routes (everything outside /admin and /login)
+    if (isCashierRoute) {
+      if (role !== "Cashier") {
+        if (role === "Admin") router.replace("/admin");
+        else if (role === "Pharmacist") router.replace("/");
+        else {
+          logout();
+          router.replace("/login?portal=cashier");
+        }
+        return;
+      }
+      setReady(true);
+      return;
+    }
+
+    // Pharmacist app routes (everything outside /admin, /cashier, /login)
     if (role !== "Pharmacist") {
-      if (role === "Admin") {
-        router.replace("/admin");
-      } else {
+      if (role === "Admin") router.replace("/admin");
+      else if (role === "Cashier") router.replace("/cashier");
+      else {
         logout();
         router.replace("/login");
       }

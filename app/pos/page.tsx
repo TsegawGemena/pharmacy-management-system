@@ -152,6 +152,27 @@ export default function PosPage() {
     );
   };
 
+  const handleSetQty = (id: string, qty: number) => {
+    const product = products.find((p) => p.id === id);
+    const next = Math.floor(Number(qty));
+    if (!Number.isFinite(next) || next < 1) {
+      setCart((prev) => prev.filter((item) => item.id !== id));
+      return;
+    }
+    if (product && next > product.stock) {
+      showToast(`Only ${product.stock} units available in stock`);
+      setCart((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, qty: product.stock } : item
+        )
+      );
+      return;
+    }
+    setCart((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, qty: next } : item))
+    );
+  };
+
   const handleRemoveItem = (id: string) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
@@ -241,7 +262,7 @@ export default function PosPage() {
               <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search medicine by name or barcode (F2)"
+                placeholder="Search medicine by name…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-sky-500 shadow-2xs"
@@ -379,6 +400,21 @@ export default function PosPage() {
             </span>
           </div>
 
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Customer name (optional)
+            </label>
+            <input
+              type="text"
+              value={selectedCustomer === "Walking Customer" ? "" : selectedCustomer}
+              onChange={(e) =>
+                setSelectedCustomer(e.target.value || "Walking Customer")
+              }
+              placeholder="Walking Customer"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+            />
+          </div>
+
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
             {cart.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
@@ -422,9 +458,15 @@ export default function PosPage() {
                         >
                           <Minus className="h-3 w-3" />
                         </button>
-                        <span className="px-3 py-1 font-mono font-bold text-xs text-slate-800 dark:text-slate-100">
-                          {item.qty}
-                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={product?.stock ?? undefined}
+                          value={item.qty}
+                          onChange={(e) => handleSetQty(item.id, Number(e.target.value))}
+                          className="w-12 px-1 py-1 text-center font-mono font-bold text-xs text-slate-800 dark:text-slate-100 bg-transparent border-x border-slate-200 dark:border-slate-700 focus:outline-hidden"
+                          title="Edit quantity"
+                        />
                         <button
                           onClick={() => handleUpdateQty(item.id, 1)}
                           disabled={isMaxReached}

@@ -75,7 +75,7 @@ export default function CreateAdjustmentModal({
         ...(initial?.id ? { id: initial.id } : {}),
         date: initial?.date || new Date().toISOString().split("T")[0],
         productName: formData.productName.trim(),
-        sku: formData.sku.trim(),
+        sku: formData.sku.trim() || formData.productName.trim(),
         category: formData.category.trim() || undefined,
         price: formData.price.trim() || undefined,
         type: formData.type,
@@ -132,7 +132,6 @@ export default function CreateAdjustmentModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                 Category
@@ -193,19 +192,6 @@ export default function CreateAdjustmentModal({
                 </div>
               )}
             </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                SKU *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
-              />
-            </div>
-          </div>
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">

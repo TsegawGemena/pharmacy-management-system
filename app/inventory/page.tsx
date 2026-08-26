@@ -16,9 +16,10 @@ import {
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import RestockModal from "@/components/inventory/restock-modal";
 import { PageState } from "@/components/ui/page-state";
-import { getInventory, getProducts, restockInventory } from "@/lib/api";
+import { getInventory, getProducts, restockInventory, updateProduct, getCategories, createCategory } from "@/lib/api";
 import type { InventoryItem } from "@/lib/types";
 import { useApi } from "@/lib/hooks/use-api";
+import type { EditAndRestockFormData } from "@/components/inventory/restock-modal";
 
 export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,9 +32,21 @@ export default function InventoryPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useApi(() => getInventory(), []);
-  const { data: productsResult } = useApi(() => getProducts({ limit: 200 }), []);
+  const { data: productsResult, refetch: refetchProducts } = useApi(
+    () => getProducts({ limit: 200 }),
+    []
+  );
+  const { data: categoriesData, refetch: refetchCategories } = useApi(
+    getCategories,
+    []
+  );
   const items = data ?? [];
   const products = productsResult?.data ?? [];
+  const categoryOptions = useMemo(() => {
+    const fromApi = (categoriesData ?? []).map((c) => c.name);
+    const fromProducts = products.map((p) => p.category).filter(Boolean);
+    return Array.from(new Set([...fromApi, ...fromProducts])).sort();
+  }, [categoriesData, products]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -52,27 +65,38 @@ export default function InventoryPage() {
     }
   };
 
-  const handleRestock = async (form: {
-    productId: string;
-    quantity: number;
-    unitPrice: string;
-    batchNo: string;
-    expiryDate: string;
-  }) => {
+  const handleEditAndRestock = async (form: EditAndRestockFormData) => {
     try {
-      await restockInventory({
-        productId: form.productId,
-        quantity: form.quantity,
-        unitPrice: form.unitPrice || undefined,
-        batchNo: form.batchNo || undefined,
-        expiryDate: form.expiryDate || undefined,
+      await updateProduct(form.productId, {
+        name: form.name,
+        category: form.category,
+        status: form.status,
+        price: form.sellingPrice,
       });
-      await refetch();
-      showToast("Stock added successfully");
+      if (form.quantity > 0) {
+        await restockInventory({
+          productId: form.productId,
+          quantity: form.quantity,
+          purchasePrice: form.purchasePrice || undefined,
+          sellingPrice: form.sellingPrice || undefined,
+          unitPrice: form.sellingPrice || undefined,
+          expiryDate: form.expiryDate || undefined,
+        });
+        showToast("Product updated and stock added");
+      } else {
+        showToast("Product updated");
+      }
+      await Promise.all([refetch(), refetchProducts()]);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to restock");
+      showToast(err instanceof Error ? err.message : "Failed to save");
       throw err;
     }
+  };
+
+  const handleAddCategory = async (name: string) => {
+    await createCategory(name);
+    await refetchCategories();
+    showToast(`Category "${name}" added`);
   };
 
   const handleExportCSV = () => {
@@ -167,17 +191,17 @@ export default function InventoryPage() {
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#006699] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#005580] transition-colors shadow-xs cursor-pointer"
         >
           <Plus className="h-4 w-4" />
-          <span>Restock</span>
+          <span>Edit & Restock</span>
         </button>
       </div>
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total SKUs */}
+        {/* Total items */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs transition-colors">
           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
             <Package className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-            <span>TOTAL SKUS</span>
+            <span>TOTAL ITEMS</span>
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2.5 font-mono">
             {stats.totalSkus.toLocaleString()}
@@ -512,7 +536,9 @@ export default function InventoryPage() {
         isOpen={isRestockOpen}
         onClose={() => setIsRestockOpen(false)}
         products={products}
-        onRestock={handleRestock}
+        categories={categoryOptions}
+        onSave={handleEditAndRestock}
+        onAddCategory={handleAddCategory}
         onCreateNewProduct={() => {
           window.location.href = "/products";
         }}

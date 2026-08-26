@@ -44,7 +44,7 @@ export interface CreateProductPayload {
   purchasePrice: number | string;
   sellingPrice: number | string;
   price?: number | string;
-  priceValidFrom: string;
+  priceValidFrom?: string;
   priceValidUntil?: string | null;
 }
 

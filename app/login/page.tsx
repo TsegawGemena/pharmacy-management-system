@@ -72,6 +72,11 @@ function LoginForm() {
       setErrorMessage(
         "This workspace is for Admins only. Please sign in with the Admin role."
       );
+    } else if (portal === "cashier") {
+      setSelectedRole("Cashier");
+      setErrorMessage(
+        "This workspace is for Cashiers only. Please sign in with the Cashier role."
+      );
     }
   }, [searchParams]);
 
@@ -103,12 +108,6 @@ function LoginForm() {
     e.preventDefault();
     if (!selectedRole) {
       setErrorMessage("Please select your role before signing in.");
-      return;
-    }
-    if (selectedRole === "Cashier") {
-      setErrorMessage(
-        "The Cashier portal is not available yet. Please sign in as Admin or Pharmacist."
-      );
       return;
     }
     if (!employeeId.trim()) {
@@ -265,7 +264,7 @@ function LoginForm() {
               >
                 {ROLE_OPTIONS.map(({ value, label, icon: Icon }) => {
                   const isSelected = selectedRole === value;
-                  const isAvailable = value === "Admin" || value === "Pharmacist";
+                  const isAvailable = true;
                   return (
                     <button
                       key={value}
@@ -277,7 +276,7 @@ function LoginForm() {
                         setErrorMessage(
                           isAvailable
                             ? null
-                            : "The Cashier portal is not available yet. Please sign in as Admin or Pharmacist."
+                            : selectedRoleOption?.description ?? ""
                         );
                       }}
                       className={`group relative flex flex-col items-center gap-2 rounded-xl border px-3 py-3.5 text-center transition-all cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
@@ -286,7 +285,7 @@ function LoginForm() {
                           : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 hover:border-sky-300 dark:hover:border-sky-700 hover:bg-sky-50/60 dark:hover:bg-sky-950/30"
                       }`}
                     >
-                      {!isAvailable && (
+                      {!isAvailable && false && (
                         <span className="absolute top-1.5 right-1.5 rounded bg-slate-200/90 dark:bg-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                           Soon
                         </span>
@@ -322,11 +321,7 @@ function LoginForm() {
                     {selectedRoleOption.label}:
                   </span>{" "}
                   {selectedRoleOption.description}
-                  {selectedRole === "Cashier" && (
-                    <span className="mt-1 block font-medium text-amber-700 dark:text-amber-400">
-                      This portal is not available yet. Use Admin or Pharmacist to continue.
-                    </span>
-                  )}
+                  
                 </p>
               )}
             </fieldset>
@@ -411,7 +406,7 @@ function LoginForm() {
 
             <button
               type="submit"
-              disabled={isLoading || selectedRole === "Cashier" || !selectedRole}
+              disabled={isLoading || !selectedRole}
               className="w-full py-3.5 px-4 bg-[#005f59] hover:bg-[#004c47] text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-70 cursor-pointer active:scale-[0.99]"
             >
               {isLoading ? (
@@ -424,7 +419,9 @@ function LoginForm() {
                       ? " as Admin"
                       : selectedRole === "Pharmacist"
                         ? " as Pharmacist"
-                        : ""}
+                        : selectedRole === "Cashier"
+                          ? " as Cashier"
+                          : ""}
                   </span>
                   <ArrowRight className="h-4 w-4" />
                 </>

@@ -31,7 +31,6 @@ import { useApi, useMutation } from "@/lib/hooks/use-api";
 interface StockAlertItem {
   id: string;
   name: string;
-  sku: string;
   category: string;
   status: "Critical" | "Low Stock";
   currentStock: number;
@@ -45,7 +44,6 @@ function mapToStockAlert(item: InventoryItem): StockAlertItem {
   return {
     id: item.id,
     name: item.name,
-    sku: item.batchNo,
     category: item.category,
     status: isCritical ? "Critical" : "Low Stock",
     currentStock: item.stock,
@@ -317,7 +315,6 @@ export default function LowStockAlertsPage() {
                   />
                 </th>
                 <th className="py-3.5 px-5">PRODUCT DETAILS</th>
-                <th className="py-3.5 px-4 font-mono">SKU</th>
                 <th className="py-3.5 px-4">CATEGORY</th>
                 <th className="py-3.5 px-5 text-center">STATUS / STOCK</th>
                 <th className="py-3.5 px-5 text-center">THRESHOLD</th>
@@ -327,7 +324,7 @@ export default function LowStockAlertsPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredAlerts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
+                  <td colSpan={6} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No alert items found in this category.
                   </td>
                 </tr>
@@ -368,16 +365,8 @@ export default function LowStockAlertsPage() {
                             <div className="font-semibold text-slate-800 dark:text-slate-200 text-[13px]">
                               {item.name}
                             </div>
-                            <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                              Batch: {item.sku || "—"}
-                            </div>
                           </div>
                         </div>
-                      </td>
-
-                      {/* SKU */}
-                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400 font-medium text-[11px]">
-                        {item.sku}
                       </td>
 
                       {/* Category */}

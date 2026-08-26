@@ -48,7 +48,6 @@ export default function StockAdjustmentsPage() {
         await updateProduct(payload.productId, {
           name: payload.productName,
           category: payload.category,
-          sku: payload.sku,
           price: payload.price,
         });
       }
@@ -83,11 +82,11 @@ export default function StockAdjustmentsPage() {
   };
 
   const handleExportReport = () => {
-    const headers = "Adjustment ID,Date,Product Name,SKU,Type,Qty Change,Adjusted By,Status\n";
+    const headers = "Adjustment ID,Date,Product Name,Type,Qty Change,Adjusted By,Status\n";
     const rows = adjustments
       .map(
         (a) =>
-          `"${a.id}","${a.date}","${a.productName}","${a.sku}","${a.type}",${a.qtyChange},"${a.adjustedBy}","${a.status}"`
+          `"${a.id}","${a.date}","${a.productName}","${a.type}",${a.qtyChange},"${a.adjustedBy}","${a.status}"`
       )
       .join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
@@ -295,7 +294,6 @@ export default function StockAdjustmentsPage() {
                 <th className="py-3.5 px-6">ID</th>
                 <th className="py-3.5 px-5">DATE</th>
                 <th className="py-3.5 px-6">PRODUCT NAME</th>
-                <th className="py-3.5 px-4 font-mono">SKU</th>
                 <th className="py-3.5 px-5 text-center">TYPE</th>
                 <th className="py-3.5 px-5 text-center font-mono">QTY CHANGE</th>
                 <th className="py-3.5 px-5">ADJUSTED BY</th>
@@ -306,7 +304,7 @@ export default function StockAdjustmentsPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredAdjustments.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
+                  <td colSpan={8} className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No adjustment records found.
                   </td>
                 </tr>
@@ -326,11 +324,6 @@ export default function StockAdjustmentsPage() {
                     {/* Product Name */}
                     <td className="py-3.5 px-6 font-semibold text-slate-800 dark:text-slate-200">
                       {adj.productName}
-                    </td>
-
-                    {/* SKU */}
-                    <td className="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400 font-medium text-[11px]">
-                      {adj.sku}
                     </td>
 
                     {/* Type Badge */}
