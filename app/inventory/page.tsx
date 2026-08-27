@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Package,
   AlertTriangle,
@@ -12,6 +13,7 @@ import {
   RotateCcw,
   Filter as FilterIcon,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import RestockModal from "@/components/inventory/restock-modal";
@@ -22,6 +24,21 @@ import { useApi } from "@/lib/hooks/use-api";
 import type { EditAndRestockFormData } from "@/components/inventory/restock-modal";
 
 export default function InventoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+        </div>
+      }
+    >
+      <InventoryPageInner />
+    </Suspense>
+  );
+}
+
+function InventoryPageInner() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [stockStatus, setStockStatus] = useState<"all" | "in_stock" | "low_stock" | "out_of_stock">("all");
@@ -30,6 +47,12 @@ export default function InventoryPage() {
   const [isRestockOpen, setIsRestockOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("filter") === "expiring") {
+      setExpiryStatus("Expiring Soon (<90d)");
+    }
+  }, [searchParams]);
 
   const { data, loading, error, refetch } = useApi(() => getInventory(), []);
   const { data: productsResult, refetch: refetchProducts } = useApi(

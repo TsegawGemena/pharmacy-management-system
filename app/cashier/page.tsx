@@ -129,7 +129,6 @@ export default function CashierDashboardPage() {
               <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-5">Invoice</th>
-                  <th className="py-3 px-5">Customer</th>
                   <th className="py-3 px-5">Method</th>
                   <th className="py-3 px-5 text-right">Amount</th>
                 </tr>
@@ -137,7 +136,7 @@ export default function CashierDashboardPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {stats.recent.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-slate-400">
+                    <td colSpan={3} className="py-10 text-center text-slate-400">
                       No sales recorded today yet.
                     </td>
                   </tr>
@@ -147,7 +146,6 @@ export default function CashierDashboardPage() {
                       <td className="py-3 px-5 font-mono font-semibold">
                         {inv.id}
                       </td>
-                      <td className="py-3 px-5">{inv.customerName || "—"}</td>
                       <td className="py-3 px-5">{inv.paymentMethod || "—"}</td>
                       <td className="py-3 px-5 text-right font-mono font-semibold">
                         {inv.amount} ETB

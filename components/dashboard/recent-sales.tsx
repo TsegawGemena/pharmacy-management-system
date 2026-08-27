@@ -32,12 +32,34 @@ function formatAmount(value: unknown): string {
   return String(value ?? "0.00");
 }
 
+function productLabelFromUnknown(item: Record<string, unknown>): string {
+  if (typeof item.product === "string" && item.product.trim()) return item.product;
+  if (typeof item.productName === "string" && item.productName.trim()) {
+    return item.productName;
+  }
+  if (Array.isArray(item.items)) {
+    const names = item.items
+      .map((line) => {
+        if (!line || typeof line !== "object") return "";
+        const row = line as Record<string, unknown>;
+        return String(row.name ?? row.productName ?? "").trim();
+      })
+      .filter(Boolean);
+    if (names.length > 0) return names.join(", ");
+  }
+  return "—";
+}
+
 function mapDashboardSale(item: Record<string, unknown>): SaleRow {
   const paymentMethod = String(item.paymentMethod ?? "Cash");
+  const product = productLabelFromUnknown(item);
+  const itemCount = Array.isArray(item.items)
+    ? item.items.length
+    : Number(item.itemCount ?? item.qty ?? 1);
   return {
     invoice: String(item.invoice ?? item.invoiceNumber ?? item.id ?? "—"),
-    product: String(item.product ?? item.productName ?? item.customerName ?? "—"),
-    items: Number(item.items ?? item.itemCount ?? item.qty ?? 1),
+    product,
+    items: Number.isFinite(itemCount) && itemCount > 0 ? itemCount : 1,
     amount: formatAmount(item.amount ?? item.total),
     paymentMethod,
     paymentType: normalizePaymentType(item.paymentMethod),
@@ -46,10 +68,11 @@ function mapDashboardSale(item: Record<string, unknown>): SaleRow {
 }
 
 function mapInvoice(invoice: Invoice): SaleRow {
+  const names = (invoice.items ?? []).map((i) => i.name).filter(Boolean);
   return {
     invoice: invoice.id,
-    product: invoice.customerName || "—",
-    items: 1,
+    product: names.length > 0 ? names.join(", ") : "—",
+    items: names.length > 0 ? names.length : 1,
     amount: invoice.amount,
     paymentMethod: invoice.paymentMethod,
     paymentType: normalizePaymentType(invoice.paymentMethod),

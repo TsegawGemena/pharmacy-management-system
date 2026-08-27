@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   Search,
   ScanBarcode,
@@ -14,11 +14,14 @@ import {
   Smartphone,
   CheckCircle2,
   X,
+  Printer,
+  FileDown,
 } from "lucide-react";
 import { completeSale, getPosProducts, holdSale } from "@/lib/api";
 import type { PosProduct as ApiPosProduct, PaymentMethod } from "@/lib/types";
-import { useApi } from "@/lib/hooks/use-api";
 import { PageState } from "@/components/ui/page-state";
+import { downloadReceiptPdf, printReceiptA5 } from "@/lib/receipt";
+import type { ReceiptData } from "@/lib/receipt";
 
 interface PosProduct {
   id: string;
@@ -45,21 +48,11 @@ function mapPosProduct(product: ApiPosProduct): PosProduct {
 }
 
 export default function PosPage() {
-  const {
-    data: apiProducts,
-    loading: productsLoading,
-    error: productsError,
-    refetch: refetchProducts,
-  } = useApi(getPosProducts);
-
-  const products = useMemo(
-    () => (apiProducts ?? []).map(mapPosProduct),
-    [apiProducts]
-  );
-
+  const [products, setProducts] = useState<PosProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Products");
-  const [selectedCustomer, setSelectedCustomer] = useState("Walking Customer");
   const [invNumber, setInvNumber] = useState("New Sale");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -68,11 +61,45 @@ export default function PosPage() {
   const [isCompletingSale, setIsCompletingSale] = useState(false);
   const [isHoldingCart, setIsHoldingCart] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const loadProducts = useCallback(async (q?: string) => {
+    setProductsLoading(true);
+    setProductsError(null);
+    try {
+      const rows = await getPosProducts(q);
+      setProducts(rows.map(mapPosProduct));
+    } catch (err) {
+      setProductsError(
+        err instanceof Error ? err.message : "Failed to load products"
+      );
+      setProducts([]);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
+
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      void loadProducts(searchQuery.trim() || undefined);
+    }, 280);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [searchQuery, loadProducts]);
+
+  const refetchProducts = () => loadProducts(searchQuery.trim() || undefined);
 
   const subtotal = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.price * item.qty, 0);
@@ -90,7 +117,6 @@ export default function PosPage() {
 
   const buildSalePayload = useCallback(
     () => ({
-      customerName: selectedCustomer,
       items: cart.map((item) => ({
         productId: item.id,
         name: item.name,
@@ -100,7 +126,7 @@ export default function PosPage() {
       paymentMethod,
       amountTendered: paymentMethod === "cash" ? amountTendered : undefined,
     }),
-    [cart, selectedCustomer, paymentMethod, amountTendered]
+    [cart, paymentMethod, amountTendered]
   );
 
   const handleAddToCart = (product: PosProduct) => {
@@ -202,7 +228,26 @@ export default function PosPage() {
     if (cart.length === 0 || isCompletingSale) return;
     setIsCompletingSale(true);
     try {
+      const cartSnapshot = [...cart];
       const response = await completeSale(buildSalePayload());
+      const receipt: ReceiptData = {
+        pharmacyName: "Gammo Pharmacy",
+        invoiceNumber: response.invoiceNumber,
+        createdAt: response.createdAt || new Date().toISOString(),
+        items: (response.items ?? cartSnapshot).map((i) => ({
+          name: i.name,
+          qty: i.qty,
+          price: i.price,
+        })),
+        subtotal: response.subtotal,
+        vat: response.vat,
+        total: response.total,
+        paymentMethod: response.paymentMethod,
+        amountTendered:
+          paymentMethod === "cash" ? amountTendered : response.total,
+        changeDue: response.changeDue,
+      };
+      setLastReceipt(receipt);
       showToast(
         response.message ||
           `Payment of ${response.total.toFixed(2)} ETB confirmed! Stock updated.`
@@ -224,12 +269,6 @@ export default function PosPage() {
 
   const filteredCatalog = useMemo(() => {
     return products.filter((item) => {
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesName = item.name.toLowerCase().includes(q);
-        const matchesCat = item.category.toLowerCase().includes(q);
-        if (!matchesName && !matchesCat) return false;
-      }
       if (
         selectedCategory !== "All Products" &&
         selectedCategory !== "Frequent" &&
@@ -239,7 +278,7 @@ export default function PosPage() {
       }
       return true;
     });
-  }, [products, searchQuery, selectedCategory]);
+  }, [products, selectedCategory]);
 
   const openPaymentModal = () => {
     setAmountTendered(Math.ceil(total));
@@ -262,7 +301,7 @@ export default function PosPage() {
               <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search medicine by name…"
+                placeholder="Search for medication by name…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-sky-500 shadow-2xs"
@@ -304,7 +343,9 @@ export default function PosPage() {
             error={productsError}
             onRetry={refetchProducts}
             empty={!productsLoading && !productsError && filteredCatalog.length === 0}
-            emptyMessage="No products found."
+            emptyMessage={
+              searchQuery.trim() ? "No medication found" : "No products found."
+            }
           >
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-[13px]">
@@ -398,21 +439,6 @@ export default function PosPage() {
             <span className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
               {invNumber}
             </span>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Customer name (optional)
-            </label>
-            <input
-              type="text"
-              value={selectedCustomer === "Walking Customer" ? "" : selectedCustomer}
-              onChange={(e) =>
-                setSelectedCustomer(e.target.value || "Walking Customer")
-              }
-              placeholder="Walking Customer"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-            />
           </div>
 
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
@@ -554,7 +580,7 @@ export default function PosPage() {
                 <div>
                   <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Checkout & Payment</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    Order: {invNumber} • {selectedCustomer}
+                    Order: {invNumber}
                   </p>
                 </div>
               </div>
@@ -643,6 +669,45 @@ export default function PosPage() {
               >
                 <CheckCircle2 className="h-4 w-4" />
                 <span>{isCompletingSale ? "Processing..." : "Confirm & Print Receipt"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {lastReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="text-center">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
+              <h3 className="text-sm font-bold">Sale completed</h3>
+              <p className="text-xs text-slate-500 mt-1 font-mono">
+                {lastReceipt.invoiceNumber}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                onClick={() => printReceiptA5(lastReceipt)}
+                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#006699] text-white text-sm font-semibold"
+              >
+                <Printer className="h-4 w-4" />
+                Print Receipt (A5)
+              </button>
+              <button
+                type="button"
+                onClick={() => void downloadReceiptPdf(lastReceipt)}
+                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold"
+              >
+                <FileDown className="h-4 w-4" />
+                Download PDF (A5)
+              </button>
+              <button
+                type="button"
+                onClick={() => setLastReceipt(null)}
+                className="py-2 text-xs font-semibold text-slate-500 hover:text-slate-700"
+              >
+                Close
               </button>
             </div>
           </div>

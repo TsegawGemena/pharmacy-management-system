@@ -12,10 +12,12 @@ import {
   CheckCircle2,
   Plus,
   Loader2,
+  Tags,
 } from "lucide-react";
 import AddProductModal from "@/components/inventory/add-product-modal";
 import RestockModal from "@/components/inventory/restock-modal";
 import type { EditAndRestockFormData } from "@/components/inventory/restock-modal";
+import CategoryManagerModal from "@/components/inventory/category-manager-modal";
 import { PageState } from "@/components/ui/page-state";
 import {
   getProducts,
@@ -38,6 +40,7 @@ function ProductManagementPage() {
   const [restockProductId, setRestockProductId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const { data, loading, error, refetch } = useApi(
     () =>
@@ -65,6 +68,8 @@ function ProductManagementPage() {
       if (productId) setRestockProductId(productId);
       setIsRestockOpen(true);
     }
+    const q = searchParams.get("q");
+    if (q) setSearchQuery(q);
   }, [searchParams]);
 
   const showToast = (msg: string) => {
@@ -171,6 +176,14 @@ function ProductManagementPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCategoriesOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-xs sm:text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          >
+            <Tags className="h-4 w-4" />
+            <span>Manage Categories</span>
+          </button>
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
@@ -413,6 +426,16 @@ function ProductManagementPage() {
         onAddProduct={handleCreateProduct}
         categories={categoryOptions}
         onAddCategory={handleAddCategory}
+      />
+
+      <CategoryManagerModal
+        isOpen={categoriesOpen}
+        onClose={() => setCategoriesOpen(false)}
+        onUpdated={async () => {
+          await refetchCategories();
+          await refetch();
+          showToast("Category updated");
+        }}
       />
     </div>
   );

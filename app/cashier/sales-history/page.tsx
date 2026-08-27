@@ -5,7 +5,8 @@ import { History, Printer, Search } from "lucide-react";
 import CashierHeader from "@/components/cashier/cashier-header";
 import { useCashierMobileMenu } from "@/components/cashier/cashier-shell-context";
 import { PageState } from "@/components/ui/page-state";
-import { getInvoices } from "@/lib/api";
+import { getInvoice, getInvoices } from "@/lib/api";
+import { printReceiptA5 } from "@/lib/receipt";
 import { useApi } from "@/lib/hooks/use-api";
 
 export default function CashierSalesHistoryPage() {
@@ -21,14 +22,35 @@ export default function CashierSalesHistoryPage() {
     return invoices.filter(
       (inv) =>
         inv.id.toLowerCase().includes(q) ||
-        inv.customerName?.toLowerCase().includes(q) ||
         inv.paymentMethod?.toLowerCase().includes(q)
     );
   }, [invoices, query]);
 
-  const printReceipt = (id: string) => {
-    window.print();
-    setToast(`Printing receipt ${id}`);
+  const printReceipt = async (id: string) => {
+    try {
+      const inv = await getInvoice(id);
+      const items = (inv.items ?? []).map((i) => ({
+        name: i.name,
+        qty: i.qty,
+        price: i.price,
+      }));
+      printReceiptA5({
+        invoiceNumber: inv.id,
+        date: inv.date,
+        createdAt: inv.createdAt,
+        items:
+          items.length > 0
+            ? items
+            : [{ name: `See invoice ${inv.id}`, qty: 1, price: inv.total ?? inv.amount }],
+        subtotal: inv.subtotal ?? inv.amount,
+        vat: inv.vat ?? 0,
+        total: inv.total ?? inv.amount,
+        paymentMethod: inv.paymentMethod,
+      });
+      setToast(`Printing receipt ${id}`);
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Failed to print receipt");
+    }
     setTimeout(() => setToast(null), 2500);
   };
 
@@ -52,7 +74,7 @@ export default function CashierSalesHistoryPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search invoice, customer, method…"
+              placeholder="Search invoice or payment…"
               className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80 py-2 pl-9 pr-3 text-xs font-medium focus:border-sky-500 focus:outline-hidden"
             />
           </div>
@@ -96,7 +118,7 @@ export default function CashierSalesHistoryPage() {
                       <td className="py-3.5 px-5 text-right">
                         <button
                           type="button"
-                          onClick={() => printReceipt(inv.id)}
+                          onClick={() => void printReceipt(inv.id)}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline"
                         >
                           <Printer className="h-3.5 w-3.5" />

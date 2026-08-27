@@ -10,9 +10,33 @@ import {
   SlidersHorizontal,
   Printer,
 } from "lucide-react";
-import { exportInvoices, getInvoices } from "@/lib/api";
+import { exportInvoices, getInvoice, getInvoices } from "@/lib/api";
+import { downloadReceiptPdf, printReceiptA5 } from "@/lib/receipt";
 import { useApi } from "@/lib/hooks/use-api";
 import { PageState } from "@/components/ui/page-state";
+import type { Invoice } from "@/lib/types";
+
+async function receiptDataFromInvoice(id: string) {
+  const inv = await getInvoice(id);
+  const items = (inv.items ?? []).map((i) => ({
+    name: i.name,
+    qty: i.qty,
+    price: i.price,
+  }));
+  return {
+    invoiceNumber: inv.id,
+    date: inv.date,
+    createdAt: inv.createdAt,
+    items:
+      items.length > 0
+        ? items
+        : [{ name: `See invoice ${inv.id}`, qty: 1, price: inv.total ?? inv.amount }],
+    subtotal: inv.subtotal ?? inv.amount,
+    vat: inv.vat ?? 0,
+    total: inv.total ?? inv.amount,
+    paymentMethod: inv.paymentMethod,
+  };
+}
 
 function parseInvoiceAmount(amount: string): number {
   return parseFloat(amount.replace(/,/g, "")) || 0;
@@ -92,6 +116,23 @@ export default function InvoicesPage() {
 
   const handleGenerateStatement = () => {
     showToast("Monthly Account Statement generated & ready for download");
+  };
+
+  const handlePrint = async (id: string) => {
+    try {
+      printReceiptA5(await receiptDataFromInvoice(id));
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to print receipt");
+    }
+  };
+
+  const handleDownloadPdf = async (id: string) => {
+    try {
+      await downloadReceiptPdf(await receiptDataFromInvoice(id));
+      showToast(`Downloaded PDF for ${id}`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to download PDF");
+    }
   };
 
   return (
@@ -239,7 +280,6 @@ export default function InvoicesPage() {
               <thead className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="py-3.5 px-6 font-mono">Invoice ID</th>
-                  <th className="py-3.5 px-6">Customer Name</th>
                   <th className="py-3.5 px-5">Date</th>
                   <th className="py-3.5 px-5 text-right font-mono">Amount (ETB)</th>
                   <th className="py-3.5 px-5">Payment Method</th>
@@ -248,13 +288,10 @@ export default function InvoicesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {invoiceList.map((inv) => (
+                {invoiceList.map((inv: Invoice) => (
                   <tr key={inv.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="py-3.5 px-6 font-mono font-bold text-slate-800 dark:text-slate-100">
                       {inv.id}
-                    </td>
-                    <td className="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
-                      {inv.customerName}
                     </td>
                     <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400">
                       {inv.date}
@@ -288,13 +325,24 @@ export default function InvoicesPage() {
                       )}
                     </td>
                     <td className="py-3.5 px-5 text-right">
-                      <button
-                        onClick={() => showToast(`Printing receipt for ${inv.id}`)}
-                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
-                        title="Print Invoice"
-                      >
-                        <Printer className="h-4 w-4" />
-                      </button>
+                      <div className="inline-flex items-center gap-1 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void handlePrint(inv.id)}
+                          className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+                          title="Print Invoice"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDownloadPdf(inv.id)}
+                          className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+                          title="Download PDF"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

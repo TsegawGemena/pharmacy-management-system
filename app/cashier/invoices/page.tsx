@@ -1,13 +1,36 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Printer, ReceiptText, Search, X } from "lucide-react";
+import { Download, Printer, ReceiptText, Search, X } from "lucide-react";
 import CashierHeader from "@/components/cashier/cashier-header";
 import { useCashierMobileMenu } from "@/components/cashier/cashier-shell-context";
 import { PageState } from "@/components/ui/page-state";
-import { getInvoices } from "@/lib/api";
+import { getInvoice, getInvoices } from "@/lib/api";
+import { downloadReceiptPdf, printReceiptA5 } from "@/lib/receipt";
 import type { Invoice } from "@/lib/types";
 import { useApi } from "@/lib/hooks/use-api";
+
+async function receiptDataFromInvoice(id: string) {
+  const inv = await getInvoice(id);
+  const items = (inv.items ?? []).map((i) => ({
+    name: i.name,
+    qty: i.qty,
+    price: i.price,
+  }));
+  return {
+    invoiceNumber: inv.id,
+    date: inv.date,
+    createdAt: inv.createdAt,
+    items:
+      items.length > 0
+        ? items
+        : [{ name: `See invoice ${inv.id}`, qty: 1, price: inv.total ?? inv.amount }],
+    subtotal: inv.subtotal ?? inv.amount,
+    vat: inv.vat ?? 0,
+    total: inv.total ?? inv.amount,
+    paymentMethod: inv.paymentMethod,
+  };
+}
 
 export default function CashierInvoicesPage() {
   const menu = useCashierMobileMenu();
@@ -15,6 +38,7 @@ export default function CashierInvoicesPage() {
   const invoices = data ?? [];
   const [query, setQuery] = useState("");
   const [viewing, setViewing] = useState<Invoice | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -22,9 +46,31 @@ export default function CashierInvoicesPage() {
     return invoices.filter(
       (inv) =>
         inv.id.toLowerCase().includes(q) ||
-        inv.customerName?.toLowerCase().includes(q)
+        inv.paymentMethod?.toLowerCase().includes(q)
     );
   }, [invoices, query]);
+
+  const handlePrint = async (id: string) => {
+    setBusyId(id);
+    try {
+      printReceiptA5(await receiptDataFromInvoice(id));
+    } catch {
+      // keep UI quiet; print dialog may be blocked
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDownloadPdf = async (id: string) => {
+    setBusyId(id);
+    try {
+      await downloadReceiptPdf(await receiptDataFromInvoice(id));
+    } catch {
+      // ignore
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <div>
@@ -41,7 +87,7 @@ export default function CashierInvoicesPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search invoices…"
+              placeholder="Search invoice or payment…"
               className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80 py-2 pl-9 pr-3 text-xs font-medium focus:border-sky-500 focus:outline-hidden"
             />
           </div>
@@ -53,7 +99,6 @@ export default function CashierInvoicesPage() {
               <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
                   <th className="py-3.5 px-5">Invoice</th>
-                  <th className="py-3.5 px-5">Customer</th>
                   <th className="py-3.5 px-5">Date</th>
                   <th className="py-3.5 px-5">Status</th>
                   <th className="py-3.5 px-5 text-right">Amount</th>
@@ -63,7 +108,7 @@ export default function CashierInvoicesPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-slate-400">
+                    <td colSpan={5} className="py-10 text-center text-slate-400">
                       <ReceiptText className="h-5 w-5 mx-auto mb-2 opacity-50" />
                       No invoices found
                     </td>
@@ -72,7 +117,6 @@ export default function CashierInvoicesPage() {
                   filtered.map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                       <td className="py-3.5 px-5 font-mono font-semibold">{inv.id}</td>
-                      <td className="py-3.5 px-5">{inv.customerName || "—"}</td>
                       <td className="py-3.5 px-5 text-slate-500">{inv.date || "—"}</td>
                       <td className="py-3.5 px-5">
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800">
@@ -93,11 +137,21 @@ export default function CashierInvoicesPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => window.print()}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline"
+                            disabled={busyId === inv.id}
+                            onClick={() => void handlePrint(inv.id)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline disabled:opacity-50"
                           >
                             <Printer className="h-3.5 w-3.5" />
                             Print
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyId === inv.id}
+                            onClick={() => void handleDownloadPdf(inv.id)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-sky-700 disabled:opacity-50"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            PDF
                           </button>
                         </div>
                       </td>
@@ -129,10 +183,6 @@ export default function CashierInvoicesPage() {
                 <dd className="font-mono font-semibold">{viewing.id}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Customer</dt>
-                <dd className="font-semibold">{viewing.customerName || "—"}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
                 <dt className="text-slate-500">Date</dt>
                 <dd className="font-semibold">{viewing.date || "—"}</dd>
               </div>
@@ -161,8 +211,18 @@ export default function CashierInvoicesPage() {
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-[#0c3e66] text-white"
+                disabled={busyId === viewing.id}
+                onClick={() => void handleDownloadPdf(viewing.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-50"
+              >
+                <Download className="h-3.5 w-3.5" />
+                PDF
+              </button>
+              <button
+                type="button"
+                disabled={busyId === viewing.id}
+                onClick={() => void handlePrint(viewing.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-[#0c3e66] text-white disabled:opacity-50"
               >
                 <Printer className="h-3.5 w-3.5" />
                 Print receipt

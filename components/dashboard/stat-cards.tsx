@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { TriangleAlert, Clock, Banknote, Loader2 } from "lucide-react";
 import { getDashboard } from "@/lib/api";
 import { useApi } from "@/lib/hooks/use-api";
@@ -53,6 +54,7 @@ export default function StatCards() {
   const cards = [
     {
       title: "Total Products",
+      href: "/products",
       value: formatNumber(totalProducts),
       subtext: (
         <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -77,6 +79,7 @@ export default function StatCards() {
     },
     {
       title: "Low Stock",
+      href: "/inventory/alerts",
       value: formatNumber(lowStockCount),
       subtext: (
         <div className="flex items-center gap-1.5 text-xs">
@@ -85,7 +88,9 @@ export default function StatCards() {
             {lowStockCount > 0 ? "Needs attention" : "All stocked"}
           </span>
           {lowStockCount > 0 && (
-            <span className="text-slate-500 dark:text-slate-400">require ordering</span>
+            <span className="text-slate-500 dark:text-slate-400">
+              require ordering
+            </span>
           )}
         </div>
       ),
@@ -97,6 +102,7 @@ export default function StatCards() {
     },
     {
       title: "Expiring Soon",
+      href: "/inventory?filter=expiring",
       value: formatNumber(expiringSoonCount),
       subtext: (
         <div className="flex items-center gap-1.5 text-xs">
@@ -114,14 +120,19 @@ export default function StatCards() {
     },
     {
       title: "Today's Sales",
+      href: "/invoices",
       value: (
         <div className="flex items-baseline gap-1.5">
           <span>{formatNumber(todaySales)}</span>
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ETB</span>
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            ETB
+          </span>
         </div>
       ),
       subtext: (
-        <span className="text-xs text-slate-500 dark:text-slate-400">Today&apos;s revenue</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          Today&apos;s revenue
+        </span>
       ),
       icon: (
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-100/90 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
@@ -133,10 +144,11 @@ export default function StatCards() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-      {cards.map((card, index) => (
-        <div
-          key={index}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs hover:shadow-xs transition-colors flex flex-col justify-between"
+      {cards.map((card) => (
+        <Link
+          key={card.href}
+          href={card.href}
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-2xs hover:shadow-xs transition-colors flex flex-col justify-between cursor-pointer"
         >
           <div className="flex items-start justify-between">
             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -152,7 +164,7 @@ export default function StatCards() {
           </div>
 
           <div className="mt-3.5 pt-1">{card.subtext}</div>
-        </div>
+        </Link>
       ))}
     </div>
   );

@@ -3,10 +3,12 @@ import type {
   SaleCheckoutRequest,
   SaleCheckoutResponse,
 } from "@/lib/types";
-import { apiFetch, unwrapList } from "@/lib/api/client";
+import { apiFetch, buildQuery, unwrapList } from "@/lib/api/client";
 
-export async function getPosProducts(): Promise<PosProduct[]> {
-  const response = await apiFetch<unknown>("/pos/products");
+export async function getPosProducts(q?: string): Promise<PosProduct[]> {
+  const response = await apiFetch<unknown>(
+    `/pos/products${buildQuery({ q: q?.trim() || undefined })}`
+  );
   return unwrapList<PosProduct>(response);
 }
 

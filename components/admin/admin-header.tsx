@@ -3,8 +3,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Calendar, Menu, Search, Settings } from "lucide-react";
+import { Calendar, Menu, Search, Settings } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
+import NotificationBell from "@/components/notification-bell";
 import { useAdminMobileMenu } from "@/components/admin/admin-shell-context";
 import { getStoredUser } from "@/lib/api";
 import type { User } from "@/lib/types";
@@ -106,14 +107,7 @@ export default function AdminHeader({
 
         <ThemeToggle />
 
-        <button
-          type="button"
-          className="relative p-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
-        </button>
+        <NotificationBell />
 
         <Link
           href="/admin/settings"

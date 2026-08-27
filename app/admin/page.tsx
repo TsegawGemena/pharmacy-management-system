@@ -399,7 +399,6 @@ export default function AdminDashboardPage() {
             <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <tr>
                 <th className="py-3 px-5 font-semibold">Invoice</th>
-                <th className="py-3 px-5 font-semibold">Customer</th>
                 <th className="py-3 px-5 font-semibold">Payment</th>
                 <th className="py-3 px-5 font-semibold">Status</th>
                 <th className="py-3 px-5 font-semibold text-right">Amount</th>
@@ -408,7 +407,7 @@ export default function AdminDashboardPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {invoiceList.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                  <td colSpan={4} className="py-8 text-center text-slate-400">
                     No recent sales found
                   </td>
                 </tr>
@@ -417,9 +416,6 @@ export default function AdminDashboardPage() {
                 <tr key={inv.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                   <td className="py-3 px-5 font-mono font-semibold text-slate-700 dark:text-slate-200">
                     {inv.id}
-                  </td>
-                  <td className="py-3 px-5 text-slate-600 dark:text-slate-300">
-                    {inv.customerName || "—"}
                   </td>
                   <td className="py-3 px-5 text-slate-600 dark:text-slate-300">
                     {inv.paymentMethod || "—"}

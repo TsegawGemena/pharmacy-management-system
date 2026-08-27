@@ -11,5 +11,6 @@ export * from "@/lib/api/reports";
 export * from "@/lib/api/attendance";
 export * from "@/lib/api/settings";
 export * from "@/lib/api/employees";
+export * from "@/lib/api/notifications";
 
 export type * from "@/lib/types";

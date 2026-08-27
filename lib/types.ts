@@ -137,6 +137,8 @@ export interface SaleCheckoutResponse {
   total: number;
   changeDue: number;
   paymentMethod: string;
+  items?: SaleLineItem[];
+  createdAt?: string;
 }
 
 export type InvoicePaymentMethod = "Cash" | "Card" | "Bank Transfer" | "Telebirr";
@@ -144,11 +146,21 @@ export type InvoiceStatus = "Paid" | "Pending" | "Overdue" | "Cancelled";
 
 export interface Invoice {
   id: string;
-  customerName: string;
+  customerName?: string;
   date: string;
   amount: string;
   paymentMethod: InvoicePaymentMethod;
   status: InvoiceStatus;
+  subtotal?: string;
+  vat?: string;
+  total?: string;
+  createdAt?: string;
+  items?: {
+    name: string;
+    qty: number;
+    price: string;
+    lineTotal: string;
+  }[];
 }
 
 export interface DashboardStats {

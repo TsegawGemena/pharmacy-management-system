@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { X, PackagePlus, Search, Plus, CheckCircle2 } from "lucide-react";
+import { X, PackagePlus, Plus, CheckCircle2 } from "lucide-react";
 import type { Product, ProductStatus } from "@/lib/types";
+import MedicationSearch from "@/components/medication-search";
 
 export interface EditAndRestockFormData {
   productId: string;
@@ -38,6 +39,8 @@ export default function RestockModal({
 }: RestockModalProps) {
   const [search, setSearch] = useState("");
   const [productId, setProductId] = useState("");
+  // search kept for filtered list fallback when products prop is used
+  const [apiPick, setApiPick] = useState<Product | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState<ProductStatus>("Active");
@@ -71,7 +74,9 @@ export default function RestockModal({
     );
   }, [products, search]);
 
-  const selected = products.find((p) => p.id === productId) ?? null;
+  const selected =
+    products.find((p) => p.id === productId) ??
+    (apiPick && apiPick.id === productId ? apiPick : null);
 
   const applyProduct = (prod: Product | null | undefined) => {
     if (!prod) {
@@ -230,29 +235,32 @@ export default function RestockModal({
           )}
 
           <div>
-            <label className={labelClass}>Select medicine *</label>
-            <div className="relative mb-2">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name…"
-                className={`${fieldClass} pl-9`}
-              />
-            </div>
+            <label className={labelClass}>Search for medication *</label>
+            <MedicationSearch
+              placeholder="Search for medication…"
+              clearOnSelect={false}
+              onSelect={(p) => {
+                setApiPick(p);
+                setProductId(p.id);
+                setSearch(p.name);
+                applyProduct(p);
+              }}
+            />
+            <p className="mt-1.5 text-[11px] text-slate-500">
+              Or pick from the list below
+            </p>
             <select
               required
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
-              className={fieldClass}
+              className={`${fieldClass} mt-2`}
             >
               {filtered.length === 0 && (
-                <option value="">No medicines found</option>
+                <option value="">No medication found</option>
               )}
               {filtered.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — stock {p.stock}
+                  {p.name} — stock {p.stock} — {p.price} ETB
                 </option>
               ))}
             </select>

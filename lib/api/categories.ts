@@ -25,6 +25,20 @@ export async function createCategory(name: string): Promise<Category> {
   return response as Category;
 }
 
+export async function updateCategory(
+  id: string,
+  name: string
+): Promise<Category> {
+  const response = await apiFetch<unknown>(`/categories/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
+  });
+  if (response && typeof response === "object" && "data" in response) {
+    return (response as { data: Category }).data;
+  }
+  return response as Category;
+}
+
 export async function deleteCategory(id: string): Promise<{ message: string }> {
   return apiFetch<{ message: string }>(`/categories/${id}`, {
     method: "DELETE",
