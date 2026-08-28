@@ -12,6 +12,7 @@ interface EditProductModalProps {
   categories: Category[];
   onSave: (id: string, data: Partial<Product>) => Promise<void> | void;
   onAddCategory?: (name: string) => Promise<void> | void;
+  onRenameCategory?: (oldName: string, newName: string) => Promise<void> | void;
 }
 
 /** Edit only catalog basics — stock, batch, SKU, and purchase price are not editable here. */
@@ -22,15 +23,19 @@ export default function EditProductModal({
   categories,
   onSave,
   onAddCategory,
+  onRenameCategory,
 }: EditProductModalProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState<ProductStatus>("Active");
   const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [showRenameCategory, setShowRenameCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [renameCategoryName, setRenameCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [categorySuccess, setCategorySuccess] = useState<string | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
+  const [renamingCategory, setRenamingCategory] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +45,9 @@ export default function EditProductModal({
     setCategory(product.category || "");
     setStatus((product.status as ProductStatus) || "Active");
     setShowCreateCategory(false);
+    setShowRenameCategory(false);
     setNewCategoryName("");
+    setRenameCategoryName("");
     setCategoryError(null);
     setCategorySuccess(null);
     setError(null);
@@ -81,6 +88,44 @@ export default function EditProductModal({
       );
     } finally {
       setAddingCategory(false);
+    }
+  };
+
+  const handleRenameCategory = async () => {
+    const value = renameCategoryName.trim();
+    if (!category) {
+      setCategoryError("Select a category to rename.");
+      return;
+    }
+    if (!value) {
+      setCategoryError("Category name cannot be empty.");
+      return;
+    }
+    if (
+      value.toLowerCase() !== category.toLowerCase() &&
+      categoryOptions.some((c) => c.toLowerCase() === value.toLowerCase())
+    ) {
+      setCategoryError(`Category "${value}" already exists.`);
+      return;
+    }
+    if (!onRenameCategory) {
+      setCategoryError("Category rename is not available.");
+      return;
+    }
+    setRenamingCategory(true);
+    setCategoryError(null);
+    try {
+      await onRenameCategory(category, value);
+      setCategory(value);
+      setShowRenameCategory(false);
+      setRenameCategoryName("");
+      setCategorySuccess(`Category renamed to "${value}".`);
+    } catch (err) {
+      setCategoryError(
+        err instanceof Error ? err.message : "Failed to rename category"
+      );
+    } finally {
+      setRenamingCategory(false);
     }
   };
 
@@ -161,7 +206,11 @@ export default function EditProductModal({
             </label>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setShowRenameCategory(false);
+                setCategoryError(null);
+              }}
               className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
             >
               <option value="">Select existing category…</option>
@@ -172,20 +221,41 @@ export default function EditProductModal({
               ))}
             </select>
 
-            {!showCreateCategory ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCreateCategory(true);
-                  setCategoryError(null);
-                  setCategorySuccess(null);
-                }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#006699] hover:underline"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Create New Category
-              </button>
-            ) : (
+            {!showCreateCategory && !showRenameCategory ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateCategory(true);
+                    setShowRenameCategory(false);
+                    setCategoryError(null);
+                    setCategorySuccess(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#006699] hover:underline"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create New Category
+                </button>
+                {category && onRenameCategory && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRenameCategory(true);
+                      setShowCreateCategory(false);
+                      setRenameCategoryName(category);
+                      setCategoryError(null);
+                      setCategorySuccess(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:underline"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit category name
+                  </button>
+                )}
+              </div>
+            ) : null}
+
+            {showCreateCategory && (
               <div className="rounded-xl border border-sky-200 bg-sky-50/60 dark:bg-sky-950/30 p-3 space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
                   New Category Name *
@@ -214,6 +284,40 @@ export default function EditProductModal({
                     className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006699] text-white disabled:opacity-60"
                   >
                     {addingCategory ? "Adding…" : "Add Category"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showRenameCategory && (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 p-3 space-y-2">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Edit category name *
+                </label>
+                <input
+                  value={renameCategoryName}
+                  onChange={(e) => setRenameCategoryName(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
+                  placeholder="Category name"
+                />
+                {categoryError && (
+                  <p className="text-xs text-rose-600">{categoryError}</p>
+                )}
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowRenameCategory(false)}
+                    className="px-3 py-1.5 text-xs rounded-lg text-slate-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={renamingCategory}
+                    onClick={() => void handleRenameCategory()}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006699] text-white disabled:opacity-60"
+                  >
+                    {renamingCategory ? "Saving…" : "Save name"}
                   </button>
                 </div>
               </div>

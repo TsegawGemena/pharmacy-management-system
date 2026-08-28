@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { History, Printer, Search } from "lucide-react";
+import Link from "next/link";
+import { History, ReceiptText, Search } from "lucide-react";
 import CashierHeader from "@/components/cashier/cashier-header";
 import { useCashierMobileMenu } from "@/components/cashier/cashier-shell-context";
 import { PageState } from "@/components/ui/page-state";
-import { getInvoice, getInvoices } from "@/lib/api";
-import { printReceiptA5 } from "@/lib/receipt";
+import { getInvoices } from "@/lib/api";
 import { useApi } from "@/lib/hooks/use-api";
 
 export default function CashierSalesHistoryPage() {
@@ -14,7 +14,6 @@ export default function CashierSalesHistoryPage() {
   const { data, loading, error, refetch } = useApi(() => getInvoices(), []);
   const invoices = data ?? [];
   const [query, setQuery] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -26,41 +25,8 @@ export default function CashierSalesHistoryPage() {
     );
   }, [invoices, query]);
 
-  const printReceipt = async (id: string) => {
-    try {
-      const inv = await getInvoice(id);
-      const items = (inv.items ?? []).map((i) => ({
-        name: i.name,
-        qty: i.qty,
-        price: i.price,
-      }));
-      printReceiptA5({
-        invoiceNumber: inv.id,
-        date: inv.date,
-        createdAt: inv.createdAt,
-        items:
-          items.length > 0
-            ? items
-            : [{ name: `See invoice ${inv.id}`, qty: 1, price: inv.total ?? inv.amount }],
-        subtotal: inv.subtotal ?? inv.amount,
-        vat: inv.vat ?? 0,
-        total: inv.total ?? inv.amount,
-        paymentMethod: inv.paymentMethod,
-      });
-      setToast(`Printing receipt ${id}`);
-    } catch (err) {
-      setToast(err instanceof Error ? err.message : "Failed to print receipt");
-    }
-    setTimeout(() => setToast(null), 2500);
-  };
-
   return (
     <div>
-      {toast && (
-        <div className="fixed top-20 right-6 z-50 px-4 py-2.5 bg-slate-900 text-white text-xs rounded-xl">
-          {toast}
-        </div>
-      )}
       <CashierHeader
         title="Sales History"
         subtitle="Your completed transactions. Sales cannot be edited."
@@ -116,14 +82,13 @@ export default function CashierSalesHistoryPage() {
                         {inv.amount}
                       </td>
                       <td className="py-3.5 px-5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => void printReceipt(inv.id)}
+                        <Link
+                          href={`/cashier/invoices/${encodeURIComponent(inv.id)}/receipt`}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline"
                         >
-                          <Printer className="h-3.5 w-3.5" />
-                          Print
-                        </button>
+                          <ReceiptText className="h-3.5 w-3.5" />
+                          Receipt
+                        </Link>
                       </td>
                     </tr>
                   ))

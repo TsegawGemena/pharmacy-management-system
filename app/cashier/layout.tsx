@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import CashierSidebar from "@/components/cashier/cashier-sidebar";
 import { CashierMobileMenuProvider } from "@/components/cashier/cashier-shell-context";
 
@@ -9,7 +10,13 @@ export default function CashierLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Receipt preview: full-screen without cashier shell
+  if (pathname?.includes("/receipt")) {
+    return <>{children}</>;
+  }
 
   return (
     <CashierMobileMenuProvider open={() => setMobileOpen(true)}>

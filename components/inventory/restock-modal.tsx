@@ -9,7 +9,11 @@ export interface EditAndRestockFormData {
   productId: string;
   name: string;
   category: string;
+  unit: string;
   status: ProductStatus;
+  /** Absolute quantity on hand (editable). */
+  stockQuantity: number;
+  /** Extra units to add as a restock. */
   quantity: number;
   purchasePrice: string;
   sellingPrice: string;
@@ -24,6 +28,7 @@ interface RestockModalProps {
   initialProductId?: string | null;
   onSave: (data: EditAndRestockFormData) => Promise<void> | void;
   onAddCategory?: (name: string) => Promise<void> | void;
+  onRenameCategory?: (oldName: string, newName: string) => Promise<void> | void;
   onCreateNewProduct?: () => void;
 }
 
@@ -35,15 +40,19 @@ export default function RestockModal({
   initialProductId,
   onSave,
   onAddCategory,
+  onRenameCategory,
   onCreateNewProduct,
 }: RestockModalProps) {
   const [search, setSearch] = useState("");
   const [productId, setProductId] = useState("");
-  // search kept for filtered list fallback when products prop is used
   const [apiPick, setApiPick] = useState<Product | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
+  /** Category name when the product (or select) was last applied — used to detect rename on save. */
+  const [categoryOriginal, setCategoryOriginal] = useState("");
+  const [unit, setUnit] = useState("Units");
   const [status, setStatus] = useState<ProductStatus>("Active");
+  const [stockQuantity, setStockQuantity] = useState(0);
   const [quantity, setQuantity] = useState(0);
   const [purchasePrice, setPurchasePrice] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
@@ -82,14 +91,20 @@ export default function RestockModal({
     if (!prod) {
       setName("");
       setCategory("");
+      setCategoryOriginal("");
+      setUnit("Units");
       setStatus("Active");
+      setStockQuantity(0);
       setPurchasePrice("");
       setSellingPrice("");
       return;
     }
     setName(prod.name || "");
     setCategory(prod.category || "");
+    setCategoryOriginal(prod.category || "");
+    setUnit(prod.unit?.trim() || "Units");
     setStatus((prod.status as ProductStatus) || "Active");
+    setStockQuantity(Math.max(0, Number(prod.stock) || 0));
     setSellingPrice(prod.price ? String(prod.price) : "");
     setPurchasePrice(prod.price ? String(prod.price) : "");
   };
@@ -104,6 +119,7 @@ export default function RestockModal({
     setNewCategoryName("");
     setCategoryError(null);
     setLocalCategories([]);
+    setCategoryOriginal("");
     const initial =
       initialProductId && products.some((p) => p.id === initialProductId)
         ? initialProductId
@@ -134,6 +150,7 @@ export default function RestockModal({
     }
     setLocalCategories((prev) => [...prev, value]);
     setCategory(value);
+    setCategoryOriginal(value);
     setNewCategoryName("");
     setShowCreateCategory(false);
     setCategoryError(null);
@@ -149,16 +166,27 @@ export default function RestockModal({
       setError("Medicine name is required.");
       return;
     }
-    if (!category.trim()) {
+    const nextCategory = category.trim();
+    if (!nextCategory) {
       setError("Category is required.");
       return;
     }
-    if (quantity > 0 && !expiryDate) {
-      setError("Expiry date is required when adding stock.");
+    const nextUnit = unit.trim() || "Units";
+    if (stockQuantity < 0) {
+      setError("Quantity on hand cannot be negative.");
       return;
     }
     if (quantity < 0) {
-      setError("Quantity cannot be negative.");
+      setError("Quantity to add cannot be negative.");
+      return;
+    }
+
+    const currentStock = selected?.stock ?? 0;
+    const stockIncreased = stockQuantity > currentStock;
+    const needsExpiry =
+      quantity > 0 || (stockIncreased && currentStock === 0);
+    if (needsExpiry && !expiryDate) {
+      setError("Expiry date is required when adding or setting new stock.");
       return;
     }
 
@@ -175,17 +203,51 @@ export default function RestockModal({
 
     setSaving(true);
     setError(null);
+    setCategoryError(null);
     try {
+      if (
+        onRenameCategory &&
+        categoryOriginal &&
+        nextCategory !== categoryOriginal
+      ) {
+        const collides = categoryList.some(
+          (c) =>
+            c.toLowerCase() === nextCategory.toLowerCase() &&
+            c.toLowerCase() !== categoryOriginal.toLowerCase()
+        );
+        if (!collides) {
+          await onRenameCategory(categoryOriginal, nextCategory);
+          setLocalCategories((prev) =>
+            Array.from(
+              new Set(
+                prev
+                  .map((c) => (c === categoryOriginal ? nextCategory : c))
+                  .concat(nextCategory)
+              )
+            )
+          );
+          setCategoryOriginal(nextCategory);
+        }
+      } else if (
+        onAddCategory &&
+        nextCategory &&
+        !categoryList.some((c) => c.toLowerCase() === nextCategory.toLowerCase())
+      ) {
+        await onAddCategory(nextCategory);
+        setLocalCategories((prev) => [...prev, nextCategory]);
+        setCategoryOriginal(nextCategory);
+      }
+
       await onSave({
         productId,
         name: name.trim(),
-        category: category.trim(),
+        category: nextCategory,
+        unit: nextUnit,
         status,
+        stockQuantity,
         quantity,
-        purchasePrice:
-          purchasePrice === "" ? String(selected?.price ?? "0") : purchasePrice,
-        sellingPrice:
-          sellingPrice === "" ? String(selected?.price ?? "0") : sellingPrice,
+        purchasePrice,
+        sellingPrice,
         expiryDate,
       });
       onClose();
@@ -260,20 +322,10 @@ export default function RestockModal({
               )}
               {filtered.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — stock {p.stock} — {p.price} ETB
+                  {p.name} — {p.stock} {p.unit || "units"} — {p.price} ETB
                 </option>
               ))}
             </select>
-            {selected && (
-              <p className="mt-1.5 text-[11px] text-slate-500">
-                On hand now:{" "}
-                <span className="font-semibold text-slate-700 dark:text-slate-200">
-                  {selected.stock} units
-                </span>
-                {" — "}
-                use Quantity below to add more.
-              </p>
-            )}
           </div>
 
           <section className="space-y-3">
@@ -294,9 +346,16 @@ export default function RestockModal({
             <div className="space-y-2">
               <label className={labelClass}>Category *</label>
               <select
-                required
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={
+                  categoryList.some((c) => c === category) ? category : ""
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setCategory(value);
+                  setCategoryOriginal(value);
+                  setCategoryError(null);
+                  setShowCreateCategory(false);
+                }}
                 className={fieldClass}
               >
                 <option value="">Select category…</option>
@@ -306,6 +365,21 @@ export default function RestockModal({
                   </option>
                 ))}
               </select>
+
+              <input
+                required
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setCategoryError(null);
+                }}
+                className={fieldClass}
+                placeholder="Edit category name here…"
+                aria-label="Category name"
+              />
+              <p className="text-[10px] text-slate-400">
+                Change the name above and save to rename this category for all products.
+              </p>
 
               {!showCreateCategory ? (
                 <button
@@ -350,6 +424,10 @@ export default function RestockModal({
                     </button>
                   </div>
                 </div>
+              )}
+
+              {categoryError && !showCreateCategory && (
+                <p className="text-xs text-rose-600">{categoryError}</p>
               )}
 
               {category && !showCreateCategory && (
@@ -401,9 +479,27 @@ export default function RestockModal({
                 />
               </div>
             </div>
+            <div>
+              <label className={labelClass}>Quantity (units on hand) *</label>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                required
+                value={stockQuantity}
+                onChange={(e) =>
+                  setStockQuantity(Math.max(0, Number(e.target.value) || 0))
+                }
+                className={`${fieldClass} font-mono text-base`}
+              />
+              <p className="mt-1 text-[10px] text-slate-400">
+                Correct the stock number here (e.g. change 18 to 16). Current
+                recorded stock: {selected?.stock ?? 0}.
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Quantity / units *</label>
+                <label className={labelClass}>Add stock (optional)</label>
                 <input
                   type="number"
                   min={0}
@@ -413,19 +509,28 @@ export default function RestockModal({
                     setQuantity(Math.max(0, Number(e.target.value) || 0))
                   }
                   className={`${fieldClass} font-mono`}
-                  placeholder="Units to add"
+                  placeholder="Extra units to add"
                 />
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Editable units to add to stock. Use 0 to only update product details.
+                  Use only when receiving new stock on top of the quantity above.
                 </p>
               </div>
               <div>
                 <label className={labelClass}>
-                  Expiry date{quantity > 0 ? " *" : ""}
+                  Expiry date
+                  {quantity > 0 ||
+                  (stockQuantity > (selected?.stock ?? 0) &&
+                    (selected?.stock ?? 0) === 0)
+                    ? " *"
+                    : ""}
                 </label>
                 <input
                   type="date"
-                  required={quantity > 0}
+                  required={
+                    quantity > 0 ||
+                    (stockQuantity > (selected?.stock ?? 0) &&
+                      (selected?.stock ?? 0) === 0)
+                  }
                   value={expiryDate}
                   onChange={(e) => setExpiryDate(e.target.value)}
                   className={fieldClass}

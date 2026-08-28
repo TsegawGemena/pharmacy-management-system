@@ -18,7 +18,7 @@ import {
 import InventoryNavTabs from "@/components/inventory/inventory-nav-tabs";
 import RestockModal from "@/components/inventory/restock-modal";
 import { PageState } from "@/components/ui/page-state";
-import { getInventory, getProducts, restockInventory, updateProduct, getCategories, createCategory } from "@/lib/api";
+import { getInventory, getProducts, restockInventory, updateProduct, getCategories, createCategory, updateCategory } from "@/lib/api";
 import type { InventoryItem } from "@/lib/types";
 import { useApi } from "@/lib/hooks/use-api";
 import type { EditAndRestockFormData } from "@/components/inventory/restock-modal";
@@ -93,8 +93,13 @@ function InventoryPageInner() {
       await updateProduct(form.productId, {
         name: form.name,
         category: form.category,
+        unit: form.unit,
         status: form.status,
         price: form.sellingPrice,
+        sellingPrice: form.sellingPrice,
+        purchasePrice: form.purchasePrice || undefined,
+        stock: form.stockQuantity,
+        expiryDate: form.expiryDate || undefined,
       });
       if (form.quantity > 0) {
         await restockInventory({
@@ -120,6 +125,17 @@ function InventoryPageInner() {
     await createCategory(name);
     await refetchCategories();
     showToast(`Category "${name}" added`);
+  };
+
+  const handleRenameCategory = async (oldName: string, newName: string) => {
+    const cat = (categoriesData ?? []).find(
+      (c) => c.name.toLowerCase() === oldName.toLowerCase()
+    );
+    if (!cat) throw new Error(`Category "${oldName}" was not found.`);
+    await updateCategory(cat.id, newName);
+    await refetchCategories();
+    await Promise.all([refetch(), refetchProducts()]);
+    showToast(`Category renamed to "${newName}"`);
   };
 
   const handleExportCSV = () => {
@@ -562,6 +578,7 @@ function InventoryPageInner() {
         categories={categoryOptions}
         onSave={handleEditAndRestock}
         onAddCategory={handleAddCategory}
+        onRenameCategory={handleRenameCategory}
         onCreateNewProduct={() => {
           window.location.href = "/products";
         }}

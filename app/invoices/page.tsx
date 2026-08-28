@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   FileText,
   Download,
@@ -9,34 +10,14 @@ import {
   CheckCircle2,
   SlidersHorizontal,
   Printer,
+  ReceiptText,
 } from "lucide-react";
-import { exportInvoices, getInvoice, getInvoices } from "@/lib/api";
-import { downloadReceiptPdf, printReceiptA5 } from "@/lib/receipt";
+import { exportInvoices, getInvoices } from "@/lib/api";
+import { downloadReceiptPdf, printReceiptA5Async } from "@/lib/receipt";
+import { receiptDataFromInvoice } from "@/lib/receipt-data";
 import { useApi } from "@/lib/hooks/use-api";
 import { PageState } from "@/components/ui/page-state";
 import type { Invoice } from "@/lib/types";
-
-async function receiptDataFromInvoice(id: string) {
-  const inv = await getInvoice(id);
-  const items = (inv.items ?? []).map((i) => ({
-    name: i.name,
-    qty: i.qty,
-    price: i.price,
-  }));
-  return {
-    invoiceNumber: inv.id,
-    date: inv.date,
-    createdAt: inv.createdAt,
-    items:
-      items.length > 0
-        ? items
-        : [{ name: `See invoice ${inv.id}`, qty: 1, price: inv.total ?? inv.amount }],
-    subtotal: inv.subtotal ?? inv.amount,
-    vat: inv.vat ?? 0,
-    total: inv.total ?? inv.amount,
-    paymentMethod: inv.paymentMethod,
-  };
-}
 
 function parseInvoiceAmount(amount: string): number {
   return parseFloat(amount.replace(/,/g, "")) || 0;
@@ -120,7 +101,7 @@ export default function InvoicesPage() {
 
   const handlePrint = async (id: string) => {
     try {
-      printReceiptA5(await receiptDataFromInvoice(id));
+      await printReceiptA5Async(await receiptDataFromInvoice(id));
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to print receipt");
     }
@@ -326,6 +307,13 @@ export default function InvoicesPage() {
                     </td>
                     <td className="py-3.5 px-5 text-right">
                       <div className="inline-flex items-center gap-1 justify-end">
+                        <Link
+                          href={`/invoices/${encodeURIComponent(inv.id)}/receipt`}
+                          className="p-1 text-slate-400 hover:text-[#0c4a6e] hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+                          title="View Receipt"
+                        >
+                          <ReceiptText className="h-4 w-4" />
+                        </Link>
                         <button
                           type="button"
                           onClick={() => void handlePrint(inv.id)}

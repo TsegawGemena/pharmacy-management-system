@@ -28,6 +28,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Cashier portal uses its own layout under app/cashier/layout.tsx
   if (pathname === "/cashier" || pathname?.startsWith("/cashier/")) {
+    // Receipt preview: standalone A5 page (no sidebar)
+    if (pathname.includes("/receipt")) {
+      return <AuthGuard>{children}</AuthGuard>;
+    }
+    return <AuthGuard>{children}</AuthGuard>;
+  }
+
+  // Pharmacist receipt preview: standalone A5 page (no sidebar)
+  if (pathname?.includes("/invoices/") && pathname.endsWith("/receipt")) {
     return <AuthGuard>{children}</AuthGuard>;
   }
 

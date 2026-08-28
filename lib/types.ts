@@ -51,6 +51,8 @@ export interface Product {
   name: string;
   category: string;
   sku: string;
+  /** Packaging / counting unit (Tablets, Bottles, etc.) */
+  unit?: string;
   price: string;
   sellingPrice?: string;
   stock: number;
@@ -155,6 +157,9 @@ export interface Invoice {
   vat?: string;
   total?: string;
   createdAt?: string;
+  amountTendered?: string;
+  changeDue?: string;
+  pharmacyName?: string;
   items?: {
     name: string;
     qty: number;

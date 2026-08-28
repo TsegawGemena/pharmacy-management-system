@@ -36,6 +36,7 @@ export interface CreateProductPayload {
   name: string;
   category: string;
   sku?: string;
+  unit?: string;
   status?: "Active" | "Inactive";
   quantity?: number;
   stock?: number;
@@ -61,9 +62,23 @@ export async function createProduct(
   return response as Product;
 }
 
+export interface UpdateProductPayload {
+  name?: string;
+  category?: string;
+  sku?: string;
+  unit?: string;
+  status?: Product["status"];
+  price?: string | number;
+  sellingPrice?: string | number;
+  purchasePrice?: string | number;
+  quantity?: number;
+  stock?: number;
+  expiryDate?: string;
+}
+
 export async function updateProduct(
   id: string,
-  product: Partial<Product>
+  product: UpdateProductPayload
 ): Promise<Product> {
   const response = await apiFetch<unknown>(`/products/${id}`, {
     method: "PATCH",

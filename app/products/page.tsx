@@ -12,12 +12,10 @@ import {
   CheckCircle2,
   Plus,
   Loader2,
-  Tags,
 } from "lucide-react";
 import AddProductModal from "@/components/inventory/add-product-modal";
 import RestockModal from "@/components/inventory/restock-modal";
 import type { EditAndRestockFormData } from "@/components/inventory/restock-modal";
-import CategoryManagerModal from "@/components/inventory/category-manager-modal";
 import { PageState } from "@/components/ui/page-state";
 import {
   getProducts,
@@ -26,7 +24,9 @@ import {
   restockInventory,
   getCategories,
   createCategory,
+  updateCategory,
 } from "@/lib/api";
+import { productCreationErrorMessage } from "@/lib/api/error-message";
 import type { Product } from "@/lib/types";
 import { useApi } from "@/lib/hooks/use-api";
 
@@ -40,7 +40,6 @@ function ProductManagementPage() {
   const [restockProductId, setRestockProductId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const { data, loading, error, refetch } = useApi(
     () =>
@@ -86,6 +85,7 @@ function ProductManagementPage() {
   const handleCreateProduct = async (newProd: {
     name: string;
     category: string;
+    unit: string;
     status: "Active" | "Inactive";
     quantity: number;
     expiryDate: string;
@@ -96,6 +96,7 @@ function ProductManagementPage() {
       await createProduct({
         name: newProd.name,
         category: newProd.category,
+        unit: newProd.unit,
         status: newProd.status,
         quantity: newProd.quantity,
         stock: newProd.quantity,
@@ -105,9 +106,9 @@ function ProductManagementPage() {
         price: newProd.sellingPrice,
       });
       await refetch();
-      showToast(`Created ${newProd.name}`);
+      showToast("Product added successfully.");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create product");
+      showToast(productCreationErrorMessage(err));
       throw err;
     }
   };
@@ -116,8 +117,13 @@ function ProductManagementPage() {
     await updateProduct(form.productId, {
       name: form.name,
       category: form.category,
+      unit: form.unit,
       status: form.status,
       price: form.sellingPrice,
+      sellingPrice: form.sellingPrice,
+      purchasePrice: form.purchasePrice || undefined,
+      stock: form.stockQuantity,
+      expiryDate: form.expiryDate || undefined,
     });
 
     if (form.quantity > 0) {
@@ -140,6 +146,20 @@ function ProductManagementPage() {
     await createCategory(name);
     await refetchCategories();
     showToast(`Category "${name}" added`);
+  };
+
+  const handleRenameCategory = async (oldName: string, newName: string) => {
+    const cat = categories.find(
+      (c) => c.name.toLowerCase() === oldName.toLowerCase()
+    );
+    if (!cat) {
+      throw new Error(`Category "${oldName}" was not found.`);
+    }
+    await updateCategory(cat.id, newName);
+    await refetchCategories();
+    await refetch();
+    if (categoryFilter === oldName) setCategoryFilter(newName);
+    showToast(`Category renamed to "${newName}"`);
   };
 
   const stats = useMemo(() => {
@@ -176,14 +196,6 @@ function ProductManagementPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setCategoriesOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-xs sm:text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-          >
-            <Tags className="h-4 w-4" />
-            <span>Manage Categories</span>
-          </button>
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
@@ -338,15 +350,15 @@ function ProductManagementPage() {
                       <td className="py-3.5 px-6 text-center">
                         {p.stock === 0 ? (
                           <span className="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                            0 units
+                            0 {p.unit || "units"}
                           </span>
                         ) : p.stock <= 20 ? (
                           <span className="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            {p.stock} units
+                            {p.stock} {p.unit || "units"}
                           </span>
                         ) : (
                           <span className="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
-                            {p.stock} units
+                            {p.stock} {p.unit || "units"}
                           </span>
                         )}
                       </td>
@@ -364,17 +376,29 @@ function ProductManagementPage() {
                         )}
                       </td>
                       <td className="py-3.5 px-5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRestockProductId(p.id);
-                            setIsRestockOpen(true);
-                          }}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline"
-                        >
-                          <PackagePlus className="h-3.5 w-3.5" />
-                          Edit & Restock
-                        </button>
+                        <div className="inline-flex items-center gap-3 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRestockProductId(p.id);
+                              setIsRestockOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRestockProductId(p.id);
+                              setIsRestockOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#006699] hover:underline"
+                          >
+                            <PackagePlus className="h-3.5 w-3.5" />
+                            Edit & Restock
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -417,6 +441,7 @@ function ProductManagementPage() {
         initialProductId={restockProductId}
         onSave={handleEditAndRestock}
         onAddCategory={handleAddCategory}
+        onRenameCategory={handleRenameCategory}
         onCreateNewProduct={() => setIsCreateOpen(true)}
       />
 
@@ -426,16 +451,6 @@ function ProductManagementPage() {
         onAddProduct={handleCreateProduct}
         categories={categoryOptions}
         onAddCategory={handleAddCategory}
-      />
-
-      <CategoryManagerModal
-        isOpen={categoriesOpen}
-        onClose={() => setCategoriesOpen(false)}
-        onUpdated={async () => {
-          await refetchCategories();
-          await refetch();
-          showToast("Category updated");
-        }}
       />
     </div>
   );

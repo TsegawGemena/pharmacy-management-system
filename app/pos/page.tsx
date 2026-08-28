@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   ScanBarcode,
@@ -20,8 +21,10 @@ import {
 import { completeSale, getPosProducts, holdSale } from "@/lib/api";
 import type { PosProduct as ApiPosProduct, PaymentMethod } from "@/lib/types";
 import { PageState } from "@/components/ui/page-state";
-import { downloadReceiptPdf, printReceiptA5 } from "@/lib/receipt";
+import { downloadReceiptPdf, printReceiptA5Async } from "@/lib/receipt";
 import type { ReceiptData } from "@/lib/receipt";
+import { receiptPathForRole } from "@/lib/receipt-data";
+import { getStoredUser } from "@/lib/api";
 
 interface PosProduct {
   id: string;
@@ -48,6 +51,7 @@ function mapPosProduct(product: ApiPosProduct): PosProduct {
 }
 
 export default function PosPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<PosProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState<string | null>(null);
@@ -688,11 +692,24 @@ export default function PosPage() {
             <div className="grid grid-cols-1 gap-2">
               <button
                 type="button"
-                onClick={() => printReceiptA5(lastReceipt)}
+                onClick={() => {
+                  const role = getStoredUser()?.role;
+                  router.push(
+                    receiptPathForRole(lastReceipt.invoiceNumber, role)
+                  );
+                }}
                 className="inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#006699] text-white text-sm font-semibold"
               >
                 <Printer className="h-4 w-4" />
-                Print Receipt (A5)
+                View &amp; Print Receipt
+              </button>
+              <button
+                type="button"
+                onClick={() => void printReceiptA5Async(lastReceipt)}
+                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold"
+              >
+                <Printer className="h-4 w-4" />
+                Quick Print (A5)
               </button>
               <button
                 type="button"

@@ -30,3 +30,39 @@ body {
   color: var(--foreground);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* Receipt print — A5 portrait, receipt only */
+@media print {
+  @page {
+    size: A5 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 148mm;
+    height: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-receipt {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 148mm !important;
+    min-height: 210mm !important;
+  }
+
+  #receipt-print-root {
+    page-break-inside: avoid;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}

@@ -14,7 +14,9 @@ import {
   restockInventory,
   getCategories,
   createCategory,
+  updateCategory,
 } from "@/lib/api";
+import { productCreationErrorMessage } from "@/lib/api/error-message";
 import { useApi } from "@/lib/hooks/use-api";
 
 export default function AdminProductsPage() {
@@ -58,36 +60,59 @@ export default function AdminProductsPage() {
     showToast(`Category "${name}" added`);
   };
 
+  const handleRenameCategory = async (oldName: string, newName: string) => {
+    const cat = categories.find(
+      (c) => c.name.toLowerCase() === oldName.toLowerCase()
+    );
+    if (!cat) throw new Error(`Category "${oldName}" was not found.`);
+    await updateCategory(cat.id, newName);
+    await refetchCategories();
+    await refetch();
+    showToast(`Category renamed to "${newName}"`);
+  };
+
   const handleCreateProduct = async (newProd: {
     name: string;
     category: string;
+    unit: string;
     status: "Active" | "Inactive";
     quantity: number;
     expiryDate: string;
     purchasePrice: number | string;
     sellingPrice: number | string;
   }) => {
-    await createProduct({
-      name: newProd.name,
-      category: newProd.category,
-      status: newProd.status,
-      quantity: newProd.quantity,
-      stock: newProd.quantity,
-      expiryDate: newProd.expiryDate,
-      purchasePrice: newProd.purchasePrice,
-      sellingPrice: newProd.sellingPrice,
-      price: newProd.sellingPrice,
-    });
-    await refetch();
-    showToast(`Created ${newProd.name}`);
+    try {
+      await createProduct({
+        name: newProd.name,
+        category: newProd.category,
+        unit: newProd.unit,
+        status: newProd.status,
+        quantity: newProd.quantity,
+        stock: newProd.quantity,
+        expiryDate: newProd.expiryDate,
+        purchasePrice: newProd.purchasePrice,
+        sellingPrice: newProd.sellingPrice,
+        price: newProd.sellingPrice,
+      });
+      await refetch();
+      showToast("Product added successfully.");
+    } catch (err) {
+      showToast(productCreationErrorMessage(err));
+      throw err;
+    }
   };
 
   const handleEditAndRestock = async (form: EditAndRestockFormData) => {
     await updateProduct(form.productId, {
       name: form.name,
       category: form.category,
+      unit: form.unit,
       status: form.status,
       price: form.sellingPrice,
+      sellingPrice: form.sellingPrice,
+      purchasePrice: form.purchasePrice || undefined,
+      stock: form.stockQuantity,
+      expiryDate: form.expiryDate || undefined,
     });
 
     if (form.quantity > 0) {
@@ -224,6 +249,7 @@ export default function AdminProductsPage() {
         initialProductId={restockProductId}
         onSave={handleEditAndRestock}
         onAddCategory={handleAddCategory}
+        onRenameCategory={handleRenameCategory}
         onCreateNewProduct={() => setIsCreateOpen(true)}
       />
 

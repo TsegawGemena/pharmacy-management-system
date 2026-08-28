@@ -1,36 +1,16 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { Download, Printer, ReceiptText, Search, X } from "lucide-react";
 import CashierHeader from "@/components/cashier/cashier-header";
 import { useCashierMobileMenu } from "@/components/cashier/cashier-shell-context";
 import { PageState } from "@/components/ui/page-state";
 import { getInvoice, getInvoices } from "@/lib/api";
-import { downloadReceiptPdf, printReceiptA5 } from "@/lib/receipt";
+import { downloadReceiptPdf, printReceiptA5Async } from "@/lib/receipt";
+import { receiptDataFromInvoice } from "@/lib/receipt-data";
 import type { Invoice } from "@/lib/types";
 import { useApi } from "@/lib/hooks/use-api";
-
-async function receiptDataFromInvoice(id: string) {
-  const inv = await getInvoice(id);
-  const items = (inv.items ?? []).map((i) => ({
-    name: i.name,
-    qty: i.qty,
-    price: i.price,
-  }));
-  return {
-    invoiceNumber: inv.id,
-    date: inv.date,
-    createdAt: inv.createdAt,
-    items:
-      items.length > 0
-        ? items
-        : [{ name: `See invoice ${inv.id}`, qty: 1, price: inv.total ?? inv.amount }],
-    subtotal: inv.subtotal ?? inv.amount,
-    vat: inv.vat ?? 0,
-    total: inv.total ?? inv.amount,
-    paymentMethod: inv.paymentMethod,
-  };
-}
 
 export default function CashierInvoicesPage() {
   const menu = useCashierMobileMenu();
@@ -53,7 +33,7 @@ export default function CashierInvoicesPage() {
   const handlePrint = async (id: string) => {
     setBusyId(id);
     try {
-      printReceiptA5(await receiptDataFromInvoice(id));
+      await printReceiptA5Async(await receiptDataFromInvoice(id));
     } catch {
       // keep UI quiet; print dialog may be blocked
     } finally {
@@ -128,13 +108,12 @@ export default function CashierInvoicesPage() {
                       </td>
                       <td className="py-3.5 px-5 text-right">
                         <div className="inline-flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setViewing(inv)}
-                            className="text-xs font-semibold text-slate-600 hover:text-sky-700"
+                          <Link
+                            href={`/cashier/invoices/${encodeURIComponent(inv.id)}/receipt`}
+                            className="text-xs font-semibold text-[#006699] hover:underline"
                           >
-                            View
-                          </button>
+                            Receipt
+                          </Link>
                           <button
                             type="button"
                             disabled={busyId === inv.id}
